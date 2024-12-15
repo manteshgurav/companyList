@@ -1,42 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import ItemList from './components/ItemList';
-import AddItem from './components/AddItem';
-import EditItem from './components/EditItem';
-import axios from 'axios';
+import React from 'react';
+import Navbar from './components/Navbar';
+import './App.css';
+import Home from './components/pages/Home';
+import Services from './components/pages/Services';
+import Products from './components/pages/Products';
+import SignUp from './components/pages/SignUp';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 function App() {
-  const [items, setItems] = useState([]);
-  const [editingItem, setEditingItem] = useState(null);
-
-  // Fetch items when the component mounts
-  useEffect(() => {
-    
-    fetchItems();
-  }, []); // Run only once when the component is mounted
-
-
-  const fetchItems = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/items');
-      setItems(response.data);
-    } catch (error) {
-      console.error('Error fetching items:', error);
-    }
-  };
   return (
-    <div className="App">
-      <h1>CRUD App</h1>
-      {editingItem ? (
-        <EditItem
-          editingItem={editingItem}
-          setEditingItem={setEditingItem}
-          setItems={setItems}
-        />
-      ) : (
-        <AddItem setItems={setItems} fetchItems={fetchItems} />
-      )}
-      <ItemList items={items} setEditingItem={setEditingItem} setItems={setItems} />
-    </div>
+    <>
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route path='/' element={<Home />} />
+          <Route path='/services' element={<Services />} />
+          <Route path='/products' element={<Products />} />
+          <Route path='/sign-up' element={<SignUp />} />
+        </Routes>
+      </Router>
+    </>
   );
 }
 
