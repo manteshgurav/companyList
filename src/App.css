@@ -7,6 +7,17 @@
   pointer-events: none;
 }
 
+.Home {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+  gap: 2rem; /* Adds spacing between HeroSection, Cards, and Footer */
+}
+
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
