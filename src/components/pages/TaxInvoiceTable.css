@@ -1,0 +1,94 @@
+.table-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto;
+  }
+  
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .search-box {
+    padding: 5px 10px;
+    width: 200px;
+  }
+  
+  .responsive-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .responsive-table th,
+  .responsive-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .responsive-table th {
+    cursor: pointer;
+    background-color: #f4f4f4;
+  }
+  
+  .responsive-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .responsive-table tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  
+  .pagination button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .pagination button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .pagination button.active {
+    background-color: #0056b3;
+  }
+
+  .actions-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px; /* Adjust the spacing between buttons */
+    flex-wrap: wrap; /* Ensures buttons wrap if there's not enough space */
+  }
+  
+
+  @media (max-width: 600px) {
+    .actions-container {
+        display: flex;
+    }
+  
+    .responsive-table td, .responsive-table th {
+      font-size: 14px; /* Smaller text for mobile */
+    }
+  
+    .table-header {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+  
+    .search-box {
+      width: 100%; /* Full width on mobile */
+    }
+  }
+  
