@@ -1,0 +1,177 @@
+.services-container {
+  padding: 50px 20px;
+  background-color: #f4f4f4;
+  font-family: "Arial", sans-serif;
+}
+
+.services-title {
+  text-align: center;
+  font-size: 3rem;
+  font-weight: bold;
+  color: #4b59f7;
+  margin-bottom: 30px;
+}
+
+.services-content {
+  max-width: 100%;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #333;
+}
+
+.services-content h2 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.services-content h3 {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #4b59f7;
+  margin-top: 30px;
+}
+
+.services-content ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.services-content ul li {
+  margin-bottom: 15px;
+}
+
+.services-content strong {
+  font-weight: bold;
+  color: #4b59f7;
+}
+
+.services-content p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.service-detail {
+  margin-top: 20px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.service-detail h4 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #4b59f7;
+  margin-bottom: 15px;
+}
+
+.service-detail p {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.service-detail strong {
+  font-weight: bold;
+}
+
+@media screen and (max-width: 960px) {
+  .services-title {
+    font-size: 2.5rem;
+  }
+
+  .services-content {
+    font-size: 1rem;
+  }
+
+  .services-content h2 {
+    font-size: 2rem;
+  }
+
+  .services-content h3 {
+    font-size: 1.8rem;
+  }
+
+  .services-content ul li {
+    font-size: 1rem;
+  }
+
+  .service-detail {
+    padding: 15px;
+  }
+
+  .service-detail h4 {
+    font-size: 1.6rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .services-container {
+    padding: 30px 20px;
+  }
+
+  .services-title {
+    font-size: 2rem;
+  }
+
+  .services-content {
+    font-size: 0.95rem;
+  }
+
+  .services-content h2 {
+    font-size: 1.8rem;
+  }
+
+  .services-content h3 {
+    font-size: 1.6rem;
+  }
+
+  .services-content ul li {
+    font-size: 0.95rem;
+  }
+
+  .service-detail {
+    padding: 12px;
+  }
+
+  .service-detail h4 {
+    font-size: 1.5rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .services-container {
+    padding: 20px;
+  }
+
+  .services-title {
+    font-size: 1.8rem;
+  }
+
+  .services-content {
+    font-size: 0.9rem;
+  }
+
+  .services-content h2 {
+    font-size: 1.6rem;
+  }
+
+  .services-content h3 {
+    font-size: 1.4rem;
+  }
+
+  .services-content ul li {
+    font-size: 0.9rem;
+  }
+
+  .service-detail {
+    padding: 10px;
+  }
+
+  .service-detail h4 {
+    font-size: 1.4rem;
+  }
+}

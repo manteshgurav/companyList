@@ -20,6 +20,7 @@ import {
   Grid,
   IconButton,
   DialogContentText,
+  CircularProgress,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { Snackbar, Alert } from "@mui/material";
@@ -35,6 +36,7 @@ const TaxInvoiceTable = () => {
   const [orderBy, setOrderBy] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [loading, setLoading] = useState(true); // Add loading state
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -65,6 +67,7 @@ const TaxInvoiceTable = () => {
 
   const fetchData = async () => {
     try {
+      setLoading(true); // Start loading
       const response = await fetch(API_URL);
       const data = await response.json();
 
@@ -78,6 +81,8 @@ const TaxInvoiceTable = () => {
     } catch (error) {
       console.error("Failed to fetch data:", error);
       setTableData([]); // Set to empty array in case of an error
+    } finally {
+      setLoading(false); // End loading
     }
   };
 
@@ -166,14 +171,12 @@ const TaxInvoiceTable = () => {
   };
   const handleDelete = async () => {
     try {
-      const response = await fetch(`${API_URL}/${selectedInvoice.invoiceNo}`, {
+      const response = await fetch(`${API_URL}/${selectedInvoice._id}`, {
         method: "DELETE",
       });
       if (response.ok) {
         setTableData(
-          tableData.filter(
-            (item) => item.invoiceNo !== selectedInvoice.invoiceNo
-          )
+          tableData.filter((item) => item._id !== selectedInvoice._id)
         );
         showSnackbar("Invoice deleted successfully!", "success");
       } else {
@@ -213,7 +216,7 @@ const TaxInvoiceTable = () => {
     // Validate inputs (as in your existing code)...
 
     try {
-      const response = await fetch(`${API_URL}/${newInvoice.invoiceNo}`, {
+      const response = await fetch(`${API_URL}/${newInvoice._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newInvoice),
@@ -221,7 +224,7 @@ const TaxInvoiceTable = () => {
       if (response.ok) {
         setTableData(
           tableData.map((item) =>
-            item.invoiceNo === newInvoice.invoiceNo ? newInvoice : item
+            item._id === newInvoice._id ? newInvoice : item
           )
         );
         showSnackbar("Invoice updated successfully!", "success");
@@ -309,121 +312,136 @@ const TaxInvoiceTable = () => {
           </Grid>
         </Grid>
       </Grid>
-
-      <TableContainer
-        component={Paper}
-        sx={{ maxWidth: "100%", overflowX: "auto" }}
-      >
-        <Table sx={{ borderCollapse: "collapse", width: "100%" }}>
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
+      {loading ? (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "300px",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      ) : filteredData.length > 0 ? (
+        <TableContainer
+          component={Paper}
+          sx={{ maxWidth: "100%", overflowX: "auto" }}
+        >
+          <Table sx={{ borderCollapse: "collapse", width: "100%" }}>
+            <TableHead>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableCell
+                    key={column.id}
+                    sortDirection={orderBy === column.id ? order : false}
+                    sx={{
+                      fontSize: "0.875rem",
+                      fontWeight: "bold",
+                      whiteSpace: "nowrap",
+                      textAlign: "center",
+                      borderBottom: "2px solid #ddd",
+                    }}
+                  >
+                    <TableSortLabel
+                      active={orderBy === column.id}
+                      direction={orderBy === column.id ? order : "asc"}
+                      onClick={() => handleSort(column.id)}
+                    >
+                      {column.label}
+                    </TableSortLabel>
+                  </TableCell>
+                ))}
                 <TableCell
-                  key={column.id}
-                  sortDirection={orderBy === column.id ? order : false}
                   sx={{
                     fontSize: "0.875rem",
                     fontWeight: "bold",
-                    whiteSpace: "nowrap",
                     textAlign: "center",
                     borderBottom: "2px solid #ddd",
                   }}
                 >
-                  <TableSortLabel
-                    active={orderBy === column.id}
-                    direction={orderBy === column.id ? order : "asc"}
-                    onClick={() => handleSort(column.id)}
-                  >
-                    {column.label}
-                  </TableSortLabel>
-                </TableCell>
-              ))}
-              <TableCell
-                sx={{
-                  fontSize: "0.875rem",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  borderBottom: "2px solid #ddd",
-                }}
-              >
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredData.length > 0 ? (
-              filteredData
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((invoice) => (
-                  <TableRow key={invoice.invoiceNo}>
-                    <TableCell>{invoice.invoiceNo}</TableCell>
-                    <TableCell>{invoice.workOrderNo}</TableCell>
-                    <TableCell>
-                      {
-                        new Date(invoice.invoiceDate)
-                          .toISOString()
-                          .split("T")[0]
-                      }
-                    </TableCell>
-                    <TableCell>{invoice.itemDescription}</TableCell>
-                    <TableCell>{invoice.quantity}</TableCell>
-                    <TableCell>{invoice.unitPrice}</TableCell>
-                    <TableCell>{invoice.totalPrice}</TableCell>
-                    <TableCell>{invoice.taxRate}</TableCell>
-                    <TableCell>{invoice.invoiceStatus}</TableCell>
-                    <TableCell>
-                      {new Date(invoice.dueDate).toISOString().split("T")[0]}
-                    </TableCell>
-                    <TableCell
-                      sx={{ textAlign: "center" }}
-                      style={{ display: "flex" }}
-                    >
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleViewDialogOpen(invoice)}
-                      >
-                        <VisibilityIcon />
-                      </IconButton>
-                      <IconButton
-                        color="secondary"
-                        onClick={() => handleDialogOpenEdit(invoice)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteDialogOpen(invoice)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length + 1} align="center">
-                  No results found
+                  Actions
                 </TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        >
-          <Alert
+            </TableHead>
+            <TableBody>
+              {filteredData.length > 0 ? (
+                filteredData
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((invoice) => (
+                    <TableRow key={invoice._id}>
+                      <TableCell>{invoice.invoiceNo}</TableCell>
+                      <TableCell>{invoice.workOrderNo}</TableCell>
+                      <TableCell>
+                        {
+                          new Date(invoice.invoiceDate)
+                            .toISOString()
+                            .split("T")[0]
+                        }
+                      </TableCell>
+                      <TableCell>{invoice.itemDescription}</TableCell>
+                      <TableCell>{invoice.quantity}</TableCell>
+                      <TableCell>{invoice.unitPrice}</TableCell>
+                      <TableCell>{invoice.totalPrice}</TableCell>
+                      <TableCell>{invoice.taxRate}</TableCell>
+                      <TableCell>{invoice.invoiceStatus}</TableCell>
+                      <TableCell>
+                        {new Date(invoice.dueDate).toISOString().split("T")[0]}
+                      </TableCell>
+                      <TableCell
+                        sx={{ textAlign: "center" }}
+                        style={{ display: "flex" }}
+                      >
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleViewDialogOpen(invoice)}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                        <IconButton
+                          color="secondary"
+                          onClick={() => handleDialogOpenEdit(invoice)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleDeleteDialogOpen(invoice)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length + 1} align="center">
+                    No results found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
             onClose={handleSnackbarClose}
-            severity={snackbarSeverity}
-            sx={{ width: "100%" }}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           >
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-      </TableContainer>
-
+            <Alert
+              onClose={handleSnackbarClose}
+              severity={snackbarSeverity}
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
+        </TableContainer>
+      ) : (
+        <Typography align="center" sx={{ marginTop: 2 }}>
+          No results found
+        </Typography>
+      )}
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"

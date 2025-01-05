@@ -1,9 +1,9 @@
 /* Navbar styles */
 .navbar {
-  background: linear-gradient(90deg, rgb(28, 27, 27) 0%, rgb(26, 23, 23) 100%);
+  background: linear-gradient(90deg, rgb(0, 0, 0) 0%, rgb(26, 23, 23) 100%);
   height: 80px;
   display: flex;
-  justify-content: space-between; /* Align navbar content between start and end */
+  justify-content: space-between;
   align-items: center;
   font-size: 1.2rem;
   position: sticky;
@@ -14,6 +14,7 @@
 .navbar-container {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
   max-width: 1500px;
   padding: 0 20px;
@@ -22,12 +23,22 @@
 .nav-menu {
   display: flex;
   list-style: none;
-  text-align: right; /* Align menu items to the right */
-  margin-top: 10px; /* Reduce spacing between white line and menu */
+  text-align: left;
+  margin-top: 10px;
+  flex-grow: 1;
+  justify-content: center; /* Centering menu items */
+}
+
+.nav-menu .spacer {
+  flex-grow: 1;
+}
+
+.nav-links-signup {
+  margin-left: auto;
 }
 
 .nav-item {
-  height: 80px;
+  height: 38px;
 }
 
 .nav-links {
@@ -51,7 +62,7 @@
 .nav-menu.active {
   display: flex;
   flex-direction: column;
-  background: #242222;
+  background: #242121;
   position: fixed;
   top: 0;
   left: 0;
@@ -65,10 +76,12 @@
 }
 
 .nav-links-mobile {
-  color: #fff;
-  text-decoration: none;
-  font-size: 1.5rem;
-  margin: 1rem 0;
+  display: block;
+  padding: 10px 15px;
+  font-size: 1.2rem;
+  border: none;
+  transition: all 0.3s ease-out;
+  text-align: center;
 }
 
 .no-scroll {
@@ -88,6 +101,10 @@
     z-index: 1001;
   }
 
+  .nav-menu .spacer {
+    display: none;
+  }
+
   .nav-menu {
     display: none;
   }
@@ -101,20 +118,50 @@
   }
 
   .nav-links-mobile:hover {
-    background: #fff;
-    color: #242424;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 5px;
   }
 
-  /* Align menu items to the right on smaller screens */
-  .nav-menu {
-    text-align: right;
+  /* Align mobile menu to the center */
+  .nav-menu.active {
+    text-align: center;
+    justify-content: center;
+    padding: 0;
+    gap: 10px;
   }
 }
 
 /* Desktop Menu Alignment and Spacing */
 @media screen and (min-width: 961px) {
   .nav-menu {
-    text-align: right; /* Align menu items to the right */
-    margin-top: 10px; /* Reduce spacing between white line and menu */
+    text-align: right;
+    margin-top: 10px;
+  }
+}
+
+.nav-menu .nav-item {
+  margin: 5px 0; /* Compact spacing */
+}
+
+.menu-icon {
+  font-size: 1.6rem;
+  top: 25px;
+  right: 25px;
+}
+
+@media screen and (max-width: 460px) {
+  body {
+    font-size: 16px;
+  }
+
+  .nav-links-mobile {
+    font-size: 1rem;
+    padding: 8px 10px;
+    border-color: #242121;
+  }
+
+  .menu-icon {
+    font-size: 1.5rem;
   }
 }

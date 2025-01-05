@@ -1,0 +1,86 @@
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* Use full viewport height */
+  padding: 10px; /* Add padding for smaller screens */
+  background-color: #f4f4f4;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  max-width: 400px; /* Limit maximum width */
+  padding: 30px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: auto; /* Ensure the form is always centered */
+}
+
+input {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+button {
+  padding: 12px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.error {
+  color: red;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Responsive styles */
+@media screen and (min-width: 768px) {
+  .login-form {
+    max-width: 500px; /* Larger width for desktops */
+    padding: 40px;
+  }
+
+  input {
+    font-size: 18px;
+  }
+
+  button {
+    font-size: 18px;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .login-container {
+    padding: 15px;
+  }
+
+  .login-form {
+    width: 90%;
+    padding: 20px;
+  }
+
+  input {
+    font-size: 14px;
+  }
+
+  button {
+    font-size: 14px;
+  }
+}

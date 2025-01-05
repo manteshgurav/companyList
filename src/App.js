@@ -10,24 +10,48 @@ import Services from "./components/pages/Services";
 import Products from "./components/pages/Products";
 import SignUp from "./components/pages/SignUp";
 import Home from "./components/pages/Home";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import LoginPage from "./components/pages/LoginPage";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 function App() {
+  const isLoggedIn = Boolean(localStorage.getItem("userCredentials"));
+
   return (
     <>
       <Router>
         <Navbar />
         <Routes>
-          <Route path="/services" element={<Services />} />
           <Route path="/" element={<Home />} />
+          <Route path="/services" element={<Services />} />
           <Route path="/products" element={<Products />} />
-          <Route path="/sign-up" element={<SignUp />} />
-          <Route path="/tax-invoice" element={<TaxInvoice />} />
-          <Route path="/purchase-bill" element={<PurchaseBill />} />
-          <Route path="/quotation" element={<Quotation />} />
-          <Route path="/ledger" element={<Ledger />} />
-          <Route path="/labor-supply" element={<LaborSupply />} />
-          <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* Restricted Routes */}
+          <Route
+            path="/tax-invoice"
+            element={isLoggedIn ? <TaxInvoice /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/purchase-bill"
+            element={isLoggedIn ? <PurchaseBill /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/quotation"
+            element={isLoggedIn ? <Quotation /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/ledger"
+            element={isLoggedIn ? <Ledger /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/labor-supply"
+            element={isLoggedIn ? <LaborSupply /> : <Navigate to="/login" />}
+          />
         </Routes>
       </Router>
     </>
