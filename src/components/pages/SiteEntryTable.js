@@ -27,7 +27,7 @@ import { Snackbar, Alert } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
-const API_URL = "http://localhost:5000/siteEntries";
+const API_URL = "https://km-enterprices.onrender.com/siteEntries";
 
 const TaxInvoiceTable = () => {
   const [tableData, setTableData] = useState([]);

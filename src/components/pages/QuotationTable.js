@@ -28,7 +28,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { format } from "date-fns"; // Use date-fns for date formatting
 
-const API_URL = "http://localhost:5000/quotations";
+const API_URL = "https://km-enterprices.onrender.com/quotations";
 
 const TaxInvoiceTable = () => {
   const [tableData, setTableData] = useState([]);
