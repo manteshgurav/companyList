@@ -4,6 +4,8 @@ import "./App.css";
 import TaxInvoice from "./components/pages/TaxInvoice";
 import PurchaseBill from "./components/pages/PurchaseBill";
 import Quotation from "./components/pages/Quotation";
+import QuotationTable from "./components/pages/QuotationTable";
+import SiteEntryTable from "./components/pages/SiteEntryTable";
 import Ledger from "./components/pages/Ledger";
 import LaborSupply from "./components/pages/LaborSupply";
 import Services from "./components/pages/Services";
@@ -43,6 +45,14 @@ function App() {
           <Route
             path="/quotation"
             element={isLoggedIn ? <Quotation /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/quotationTable"
+            element={isLoggedIn ? <QuotationTable /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/siteEntryTable"
+            element={isLoggedIn ? <SiteEntryTable /> : <Navigate to="/login" />}
           />
           <Route
             path="/ledger"

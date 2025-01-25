@@ -26,9 +26,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import { Snackbar, Alert } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { format } from "date-fns"; // Use date-fns for date formatting
 
-const API_URL = "https://km-enterprices.onrender.com/taxInvoices";
+const API_URL = "http://localhost:5000/siteEntries";
 
 const TaxInvoiceTable = () => {
   const [tableData, setTableData] = useState([]);
@@ -37,26 +36,19 @@ const TaxInvoiceTable = () => {
   const [orderBy, setOrderBy] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // success, error, warning, info
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newInvoice, setNewInvoice] = useState({
-    invoiceNo: "",
-    workOrderNo: "",
-    invoiceDate: "",
-    itemDescription: "",
-    quantity: "",
-    unitPrice: "",
-    totalPrice: "",
-    taxRate: "",
-    invoiceStatus: "",
-    dueDate: "",
+    materialIn: "",
+    materialOut: "",
+    labourEntry: "",
   });
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
@@ -68,22 +60,21 @@ const TaxInvoiceTable = () => {
 
   const fetchData = async () => {
     try {
-      setLoading(true); // Start loading
+      setLoading(true);
       const response = await fetch(API_URL);
       const data = await response.json();
 
-      // Ensure the data is an array before setting it
       if (Array.isArray(data)) {
         setTableData(data);
       } else {
         console.error("Fetched data is not an array:", data);
-        setTableData([]); // Set to empty array in case of unexpected response
+        setTableData([]);
       }
     } catch (error) {
       console.error("Failed to fetch data:", error);
-      setTableData([]); // Set to empty array in case of an error
+      setTableData([]);
     } finally {
-      setLoading(false); // End loading
+      setLoading(false);
     }
   };
 
@@ -116,16 +107,9 @@ const TaxInvoiceTable = () => {
 
   const handleDialogOpenAdd = () => {
     setNewInvoice({
-      invoiceNo: "",
-      workOrderNo: "",
-      invoiceDate: "",
-      itemDescription: "",
-      quantity: "",
-      unitPrice: "",
-      totalPrice: "",
-      taxRate: "",
-      invoiceStatus: "",
-      dueDate: "",
+      materialIn: "",
+      materialOut: "",
+      labourEntry: "",
     });
     setMode("add");
     setDialogOpen(true);
@@ -134,12 +118,7 @@ const TaxInvoiceTable = () => {
   const handleDialogOpenEdit = (invoice) => {
     setNewInvoice({
       ...invoice,
-      invoiceDate: invoice.invoiceDate
-        ? new Date(invoice.invoiceDate).toISOString().split("T")[0]
-        : "",
-      dueDate: invoice.dueDate
-        ? new Date(invoice.dueDate).toISOString().split("T")[0]
-        : "",
+      date: new Date(invoice.date).toISOString().split("T")[0], // Format to YYYY-MM-DD
     });
     setMode("edit");
     setDialogOpen(true);
@@ -178,6 +157,7 @@ const TaxInvoiceTable = () => {
     setSnackbarSeverity(severity);
     setSnackbarOpen(true);
   };
+
   const handleDelete = async () => {
     try {
       const response = await fetch(`${API_URL}/${selectedInvoice._id}`, {
@@ -199,8 +179,6 @@ const TaxInvoiceTable = () => {
   };
 
   const handleAddInvoice = async () => {
-    // Validate inputs (as in your existing code)...
-
     try {
       const response = await fetch(API_URL, {
         method: "POST",
@@ -222,28 +200,34 @@ const TaxInvoiceTable = () => {
   };
 
   const handleEditInvoice = async () => {
-    // Validate inputs (as in your existing code)...
-
     try {
+      console.log("Sending PUT request with ID:", newInvoice._id); // Log the ID
+
       const response = await fetch(`${API_URL}/${newInvoice._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newInvoice),
       });
+
       if (response.ok) {
+        const updatedInvoice = await response.json(); // Get the updated quotation
         setTableData(
           tableData.map((item) =>
-            item._id === newInvoice._id ? newInvoice : item
+            item._id === newInvoice._id ? updatedInvoice : item
           )
         );
-        showSnackbar("Invoice updated successfully!", "success");
+        showSnackbar("labourEntry updated successfully!", "success");
       } else {
-        showSnackbar("Failed to update invoice.", "error");
+        const errorData = await response.json();
+        showSnackbar(
+          `Failed to update labourEntry: ${errorData.message}`,
+          "error"
+        );
       }
       handleDialogClose();
     } catch (error) {
       console.error("Failed to update data:", error);
-      showSnackbar("Error updating invoice.", "error");
+      showSnackbar("Error updating labourEntry.", "error");
     }
   };
 
@@ -253,19 +237,11 @@ const TaxInvoiceTable = () => {
   };
 
   const columns = [
-    { id: "invoiceNo", label: "Invoice No" },
-    { id: "workOrderNo", label: "Work Order No" },
-    { id: "invoiceDate", label: "Invoice Date" },
-    { id: "itemDescription", label: "Item Description" },
-    { id: "quantity", label: "Quantity" },
-    { id: "unitPrice", label: "Unit Price" },
-    { id: "totalPrice", label: "Total Price" },
-    { id: "taxRate", label: "Tax Rate" },
-    { id: "invoiceStatus", label: "Invoice Status" },
-    { id: "dueDate", label: "Due Date" },
+    { id: "materialIn", label: "Material In" },
+    { id: "materialOut", label: "Material Out" },
+    { id: "labourEntry", label: "labour Entry" },
   ];
 
-  // Filter table data based on search query
   const filteredData = tableData.filter((invoice) => {
     return Object.values(invoice)
       .join(" ")
@@ -316,7 +292,7 @@ const TaxInvoiceTable = () => {
               onClick={handleDialogOpenAdd}
               sx={{ width: "100%" }}
             >
-              Add Tax Invoices
+              Add Site Entry
             </Button>
           </Grid>
         </Grid>
@@ -379,20 +355,9 @@ const TaxInvoiceTable = () => {
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((invoice) => (
                     <TableRow key={invoice._id}>
-                      <TableCell>{invoice.invoiceNo}</TableCell>
-                      <TableCell>{invoice.workOrderNo}</TableCell>
-                      <TableCell>
-                        {format(new Date(invoice.invoiceDate), "dd-MM-yyyy")}
-                      </TableCell>
-                      <TableCell>{invoice.itemDescription}</TableCell>
-                      <TableCell>{invoice.quantity}</TableCell>
-                      <TableCell>{invoice.unitPrice}</TableCell>
-                      <TableCell>{invoice.totalPrice}</TableCell>
-                      <TableCell>{invoice.taxRate}</TableCell>
-                      <TableCell>{invoice.invoiceStatus}</TableCell>
-                      <TableCell>
-                        {new Date(invoice.dueDate).toISOString().split("T")[0]}
-                      </TableCell>
+                      <TableCell>{invoice.materialIn}</TableCell>
+                      <TableCell>{invoice.materialOut}</TableCell>
+                      <TableCell>{invoice.labourEntry}</TableCell>
                       <TableCell
                         sx={{ textAlign: "center" }}
                         style={{ display: "flex" }}
@@ -421,31 +386,15 @@ const TaxInvoiceTable = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length + 1} align="center">
-                    No results found
+                    No records found
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-          <Snackbar
-            open={snackbarOpen}
-            autoHideDuration={3000}
-            onClose={handleSnackbarClose}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          >
-            <Alert
-              onClose={handleSnackbarClose}
-              severity={snackbarSeverity}
-              sx={{ width: "100%" }}
-            >
-              {snackbarMessage}
-            </Alert>
-          </Snackbar>
         </TableContainer>
       ) : (
-        <Typography align="center" sx={{ marginTop: 2 }}>
-          No results found
-        </Typography>
+        <Typography>No records found</Typography>
       )}
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
@@ -456,117 +405,67 @@ const TaxInvoiceTable = () => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
 
-      {/* Add/Edit Invoice Dialog */}
+      {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={handleDialogClose}>
         <DialogTitle>
-          {mode === "add" ? "Add Tax Invoice" : "Edit Tax Invoice"}
+          {mode === "add" ? "Add New labourEntry" : "Edit labourEntry"}
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                label="Invoice No"
-                name="invoiceNo"
-                value={newInvoice.invoiceNo}
-                onChange={handleInputChange}
-                fullWidth
-                disabled={mode === "edit"}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Work Order No"
-                name="workOrderNo"
-                value={newInvoice.workOrderNo}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Invoice Date"
-                name="invoiceDate"
-                type="date"
-                value={newInvoice.invoiceDate}
-                onChange={handleInputChange}
-                fullWidth
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Item Description"
-                name="itemDescription"
-                value={newInvoice.itemDescription}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Quantity"
-                name="quantity"
-                value={newInvoice.quantity}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Unit Price"
-                name="unitPrice"
-                value={newInvoice.unitPrice}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Total Price"
-                name="totalPrice"
-                value={newInvoice.totalPrice}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Tax Rate"
-                name="taxRate"
-                value={newInvoice.taxRate}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Invoice Status"
-                name="invoiceStatus"
-                value={newInvoice.invoiceStatus}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Due Date"
-                name="dueDate"
-                type="date"
-                value={newInvoice.dueDate}
-                onChange={handleInputChange}
-                fullWidth
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-          </Grid>
+          <DialogContentText>
+            {mode === "add"
+              ? "Please fill out the form below to add a new labour Entry."
+              : "Edit the details of the tax labour Entry."}
+          </DialogContentText>
+          <Box
+            component="form"
+            noValidate
+            autoComplete="off"
+            sx={{ width: "100%", paddingTop: 2 }}
+          >
+            <TextField
+              label="Material In"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              name="materialIn"
+              value={newInvoice.materialIn}
+              onChange={handleInputChange}
+            />
+            <TextField
+              label="Material Out"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              name="materialOut"
+              value={newInvoice.materialOut}
+              onChange={handleInputChange}
+            />
+            <TextField
+              label="labour Entry"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              name="labourEntry"
+              value={newInvoice.labourEntry}
+              onChange={handleInputChange}
+            />
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
+          <Button onClick={handleDialogClose} color="primary">
+            Cancel
+          </Button>
           <Button
             onClick={mode === "add" ? handleAddInvoice : handleEditInvoice}
             color="primary"
@@ -576,38 +475,40 @@ const TaxInvoiceTable = () => {
         </DialogActions>
       </Dialog>
 
-      {/* View Invoice Dialog */}
+      {/* View Dialog */}
       <Dialog open={viewDialogOpen} onClose={handleViewDialogClose}>
-        <DialogTitle>View Tax Invoice</DialogTitle>
+        <DialogTitle>View labour Entry</DialogTitle>
         <DialogContent>
-          {selectedInvoice && (
-            <DialogContentText>
-              <pre>{JSON.stringify(selectedInvoice, null, 2)}</pre>
-            </DialogContentText>
-          )}
+          <Typography variant="body1">
+            <strong>Material In:</strong> {selectedInvoice?.materialIn}
+          </Typography>
+          <Typography variant="body1">
+            <strong>Material Out:</strong> {selectedInvoice?.materialOut}
+          </Typography>
+          <Typography variant="body1">
+            <strong>labour Entry:</strong> {selectedInvoice?.labourEntry}
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleViewDialogClose}>Close</Button>
+          <Button onClick={handleViewDialogClose} color="primary">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Delete Invoice Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleDeleteDialogClose}
-        sx={{ padding: "20px" }}
-      >
-        <DialogTitle>Delete Tax Invoice</DialogTitle>
+      {/* Delete Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteDialogClose}>
+        <DialogTitle>Delete labourEntry</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete the selected invoice?
+          <DialogContentText>
+            Are you sure you want to delete this labour Entry?
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDeleteDialogClose}>Cancel</Button>
-          <Button
-            color="error"
-            onClick={handleDelete}
-            sx={{ color: "#ff0000" }}
-          >
+          <Button onClick={handleDeleteDialogClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDelete} color="secondary">
             Delete
           </Button>
         </DialogActions>

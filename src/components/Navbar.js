@@ -87,7 +87,7 @@ function Navbar() {
                 className="nav-links"
                 onClick={closeMobileMenu}
               >
-                Coating Services
+                Coating
               </Link>
             </li>
             <li className="nav-item">
@@ -96,9 +96,31 @@ function Navbar() {
                 className="nav-links"
                 onClick={closeMobileMenu}
               >
-                Coating Products
+                Products
               </Link>
             </li>
+            {isLoggedIn && (
+              <li className="nav-item">
+                <Link
+                  to="/quotationTable"
+                  className="nav-links"
+                  onClick={closeMobileMenu}
+                >
+                  Quotation
+                </Link>
+              </li>
+            )}
+            {isLoggedIn && (
+              <li className="nav-item">
+                <Link
+                  to="/siteEntryTable"
+                  className="nav-links"
+                  onClick={closeMobileMenu}
+                >
+                  Site Entry
+                </Link>
+              </li>
+            )}
             {isLoggedIn && (
               <li className="nav-item">
                 <Link
