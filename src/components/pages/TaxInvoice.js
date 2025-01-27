@@ -27,6 +27,10 @@ import { Snackbar, Alert } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { format } from "date-fns"; // Use date-fns for date formatting
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf"; // Import PDF icon
+import FileDownloadDoneIcon from "@mui/icons-material/FileDownloadDone"; // Import Excel icon
+import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
 
 const API_URL = "https://km-enterprices.onrender.com/taxInvoices";
 
@@ -252,6 +256,106 @@ const TaxInvoiceTable = () => {
     setNewInvoice({ ...newInvoice, [name]: value });
   };
 
+  const exportToExcel = (invoice) => {
+    // Prepare the invoice data as an array of objects (rows)
+    const invoiceData = [
+      {
+        "Invoice No": invoice.invoiceNo,
+        "Work Order No": invoice.workOrderNo,
+        "Invoice Date": format(new Date(invoice.invoiceDate), "dd-MM-yyyy"),
+        Description: invoice.itemDescription,
+        Quantity: invoice.quantity,
+        "Unit Price": invoice.unitPrice,
+        "Total Price": invoice.totalPrice,
+        "Tax Rate": invoice.taxRate,
+        Status: invoice.invoiceStatus,
+        "Due Date": new Date(invoice.dueDate).toISOString().split("T")[0],
+      },
+    ];
+
+    // Create a new worksheet
+    const ws = XLSX.utils.json_to_sheet(invoiceData);
+
+    // Create a new workbook with the worksheet
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Invoice");
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(wb, `${invoice.invoiceNo}_Invoice.xlsx`);
+  };
+
+  const exportToPDF = (invoice) => {
+    const doc = new jsPDF();
+
+    // Header with custom title (KM Enterprises)
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("KM Enterprises", 10, 10);
+
+    // Draw a line under the header
+    doc.setLineWidth(0.5);
+    doc.line(10, 15, 200, 15);
+
+    // Add the invoice title
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Invoice Details", 10, 30);
+
+    // Create table headers with background color
+    doc.setFillColor(0, 123, 255); // Blue background for headers
+    doc.setTextColor(255, 255, 255); // White text color
+    doc.rect(10, 35, 190, 10, "F"); // Table header background
+    doc.text("Invoice No", 10, 40);
+    doc.text("Work Order No", 60, 40);
+    doc.text("Invoice Date", 110, 40);
+    doc.text("Description", 160, 40);
+
+    // Table row for the first set of data
+    doc.setTextColor(0, 0, 0); // Reset text color to black for data
+    doc.text(`${invoice.invoiceNo}`, 10, 50);
+    doc.text(`${invoice.workOrderNo}`, 60, 50);
+    doc.text(`${format(new Date(invoice.invoiceDate), "dd-MM-yyyy")}`, 110, 50);
+    doc.text(`${invoice.itemDescription}`, 160, 50);
+
+    // Add another row for quantity, unit price, total price, tax rate
+    doc.text("Quantity", 10, 60);
+    doc.text("Unit Price", 60, 60);
+    doc.text("Total Price", 110, 60);
+    doc.text("Tax Rate", 160, 60);
+
+    doc.text(`${invoice.quantity}`, 10, 70);
+    doc.text(`${invoice.unitPrice}`, 60, 70);
+    doc.text(`${invoice.totalPrice}`, 110, 70);
+    doc.text(`${invoice.taxRate}`, 160, 70);
+
+    // Add another row for invoice status and due date
+    doc.text("Status", 10, 80);
+    doc.text("Due Date", 60, 80);
+
+    doc.text(`${invoice.invoiceStatus}`, 10, 90);
+    doc.text(
+      `${new Date(invoice.dueDate).toISOString().split("T")[0]}`,
+      60,
+      90
+    );
+
+    // Add a line under the content
+    doc.setLineWidth(0.5);
+    doc.line(10, 95, 200, 95);
+
+    // Footer with page number
+    const pageCount = doc.internal.getNumberOfPages();
+    doc.setFontSize(10);
+    doc.text(
+      `Page ${pageCount}`,
+      doc.internal.pageSize.width - 20,
+      doc.internal.pageSize.height - 10
+    );
+
+    // Save the PDF with the file name
+    doc.save(`${invoice.invoiceNo}_Invoice.pdf`);
+  };
+
   const columns = [
     { id: "invoiceNo", label: "Invoice No" },
     { id: "workOrderNo", label: "Work Order No" },
@@ -397,11 +501,23 @@ const TaxInvoiceTable = () => {
                         sx={{ textAlign: "center" }}
                         style={{ display: "flex" }}
                       >
-                        <IconButton
+                        {/* <IconButton
                           color="primary"
                           onClick={() => handleViewDialogOpen(invoice)}
                         >
                           <VisibilityIcon />
+                        </IconButton> */}
+                        <IconButton
+                          onClick={() => exportToPDF(invoice)}
+                          color="primary"
+                        >
+                          <PictureAsPdfIcon />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => exportToExcel(invoice)}
+                          color="primary"
+                        >
+                          <FileDownloadDoneIcon />
                         </IconButton>
                         <IconButton
                           color="secondary"

@@ -27,23 +27,31 @@ import { Snackbar, Alert } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { format } from "date-fns"; // Use date-fns for date formatting
+import jsPDF from "jspdf"; // PDF Export Library
+import { utils, writeFile } from "xlsx"; // Excel Export Library
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf"; // Import PDF icon
+import FileDownloadDoneIcon from "@mui/icons-material/FileDownloadDone"; // Import Excel icon
+import { Email as EmailIcon } from "@mui/icons-material"; // Add Email icon
 
 const API_URL = "https://km-enterprices.onrender.com/quotations";
 
 const TaxInvoiceTable = () => {
   const [tableData, setTableData] = useState([]);
   const [search, setSearch] = useState("");
+  const [gmail, setGmail] = useState("");
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [loading, setLoading] = useState(true);
+  const [selectedInvoice, setSelectedInvoice] = React.useState(null);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogGmailpen, setDialogGmailpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newInvoice, setNewInvoice] = useState({
@@ -54,7 +62,7 @@ const TaxInvoiceTable = () => {
     rate: "",
     total: "",
   });
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [invoiceData, setInvoiceData] = useState(null);
 
   const [mode, setMode] = useState("add");
 
@@ -130,9 +138,15 @@ const TaxInvoiceTable = () => {
     setMode("edit");
     setDialogOpen(true);
   };
+  const handleGmailOpen = (invoice) => {
+    setDialogGmailpen(true);
+  };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
+  };
+  const handleGmailDialogClose = () => {
+    setDialogGmailpen(false);
   };
 
   const handleViewDialogOpen = (invoice) => {
@@ -242,6 +256,61 @@ const TaxInvoiceTable = () => {
     const { name, value } = e.target;
     setNewInvoice({ ...newInvoice, [name]: value });
   };
+  const handleGmailChange = (e) => {
+    setGmail(e.target.value);
+  };
+
+  const exportToPDF = (invoice) => {
+    const doc = new jsPDF();
+
+    // Set up the header with a custom title (KM Enterprises)
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("KM Enterprises", 10, 10);
+
+    // Add a line under the header
+    doc.setLineWidth(0.5);
+    doc.line(10, 12, 200, 12);
+
+    // Set up the body content with invoice details
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Company: ${invoice.companyName}`, 10, 30);
+    doc.text(`Date: ${format(new Date(invoice.date), "dd-MM-yyyy")}`, 10, 40);
+    doc.text(`Description: ${invoice.description}`, 10, 50);
+    doc.text(`Unit: ${invoice.unit}`, 10, 60);
+    doc.text(`Rate: ${invoice.rate}`, 10, 70);
+    doc.text(`Total: ${invoice.total}`, 10, 80);
+
+    // Add a footer
+    const pageCount = doc.internal.getNumberOfPages();
+    doc.setFontSize(10);
+
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("KM Enterprises", 10, 10);
+    doc.text(
+      "===========================================================",
+      10,
+      10
+    );
+
+    doc.text(
+      `Page ${pageCount}`,
+      doc.internal.pageSize.width - 20,
+      doc.internal.pageSize.height - 10
+    );
+
+    // Save the PDF with the file name
+    doc.save(`${invoice.companyName}_Invoice.pdf`);
+  };
+
+  const exportToExcel = (invoice) => {
+    const worksheet = utils.json_to_sheet([invoice]);
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, "Invoice");
+    writeFile(workbook, `${invoice.companyName}_Invoice.xlsx`);
+  };
 
   const columns = [
     { id: "companyName", label: "Company Name" },
@@ -258,6 +327,22 @@ const TaxInvoiceTable = () => {
       .toLowerCase()
       .includes(search.toLowerCase());
   });
+
+  const sendEmail = () => {
+    // Logic to send PDF and Excel files via email
+    const email = gmail; // Replace with the actual email input from the user or a predefined email
+    const subject = `Quotation for ${invoiceData.companyName}`;
+    const body = `Please find attached the PDF and Excel files for the quotation.\n\nDate: ${invoiceData.date}\nDescription: ${invoiceData.description}`;
+
+    // Trigger mailto link to open the default email client with attachments (Note: mailto does not support attachments)
+    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+
+    // Open the user's email client with the pre-filled details
+    window.location.href = mailtoLink;
+    setDialogGmailpen(false);
+  };
 
   return (
     <Box sx={{ padding: "20px", overflowX: "auto" }}>
@@ -307,64 +392,101 @@ const TaxInvoiceTable = () => {
           </Grid>
         </Grid>
       </Grid>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow style={{ background: "peachpuff" }}>
-              {columns.map((column) => (
-                <TableCell key={column.id}>
-                  <TableSortLabel
-                    active={orderBy === column.id}
-                    direction={orderBy === column.id ? order : "asc"}
-                    onClick={() => handleSort(column.id)}
-                  >
-                    {column.label}
-                  </TableSortLabel>
-                </TableCell>
-              ))}
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredData
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((invoice) => (
-                <TableRow key={invoice._id}>
-                  <TableCell>{invoice.companyName}</TableCell>
-                  <TableCell>
-                    {format(new Date(invoice.date), "dd-MM-yyyy")}
+      {loading ? (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "300px",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      ) : filteredData.length > 0 ? (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow style={{ background: "peachpuff" }}>
+                {columns.map((column) => (
+                  <TableCell key={column.id}>
+                    <TableSortLabel
+                      active={orderBy === column.id}
+                      direction={orderBy === column.id ? order : "asc"}
+                      onClick={() => handleSort(column.id)}
+                    >
+                      {column.label}
+                    </TableSortLabel>
                   </TableCell>
-                  <TableCell>{invoice.description}</TableCell>
-                  <TableCell>{invoice.unit}</TableCell>
-                  <TableCell>{invoice.rate}</TableCell>
-                  <TableCell>{invoice.total}</TableCell>
-                  <TableCell>
-                    <IconButton
-                      onClick={() => handleViewDialogOpen(invoice)}
+                ))}
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredData
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((invoice) => (
+                  <TableRow key={invoice._id}>
+                    <TableCell>{invoice.companyName}</TableCell>
+                    <TableCell>
+                      {format(new Date(invoice.date), "dd-MM-yyyy")}
+                    </TableCell>
+                    <TableCell>{invoice.description}</TableCell>
+                    <TableCell>{invoice.unit}</TableCell>
+                    <TableCell>{invoice.rate}</TableCell>
+                    <TableCell>{invoice.total}</TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center" }}
+                      style={{ display: "flex" }}
+                    >
+                      {/* <IconButton
+                      onClick={() => {
+                        setInvoiceData(invoice);
+                        handleGmailOpen();
+                      }}
                       color="primary"
                     >
+                      <EmailIcon />
+                    </IconButton> */}
+                      {/* <IconButton
+                      color="primary"
+                      onClick={() => handleViewDialogOpen(invoice)}
+                    >
                       <VisibilityIcon />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleDialogOpenEdit(invoice)}
-                      color="secondary"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleDeleteDialogOpen(invoice)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
+                    </IconButton> */}
+                      <IconButton
+                        onClick={() => exportToPDF(invoice)}
+                        color="primary"
+                      >
+                        <PictureAsPdfIcon />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => exportToExcel(invoice)}
+                        color="primary"
+                      >
+                        <FileDownloadDoneIcon />
+                      </IconButton>
+                      <IconButton
+                        color="secondary"
+                        onClick={() => handleDialogOpenEdit(invoice)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        color="error"
+                        onClick={() => handleDeleteDialogOpen(invoice)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        <Typography>No records found</Typography>
+      )}
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
@@ -441,15 +563,50 @@ const TaxInvoiceTable = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDialogClose} color="primary">
-            Cancel
-          </Button>
+          <Button onClick={handleDialogClose}>Cancel</Button>
           <Button
             onClick={mode === "add" ? handleAddInvoice : handleEditInvoice}
-            color="primary"
           >
             {mode === "add" ? "Add" : "Save"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteDialogClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Delete this Quotation?"}
+        </DialogTitle>
+        <DialogActions>
+          <Button onClick={handleDeleteDialogClose}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={dialogGmailpen} onClose={handleGmailDialogClose}>
+        <DialogContent>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                label="Gmail"
+                name="gmail"
+                value={gmail}
+                onChange={handleGmailChange}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleGmailDialogClose}>Cancel</Button>
+          <Button onClick={sendEmail}>{"Send"}</Button>
         </DialogActions>
       </Dialog>
 
@@ -458,64 +615,41 @@ const TaxInvoiceTable = () => {
         <DialogTitle>View Quotation</DialogTitle>
         <DialogContent>
           {selectedInvoice && (
-            <div>
-              <Typography variant="h6">
-                Company Name: {selectedInvoice.companyName}
-              </Typography>
-              <Typography variant="body1">
-                Date: {format(new Date(selectedInvoice.date), "dd-MM-yyyy")}
-              </Typography>
-              <Typography variant="body1">
-                Description: {selectedInvoice.description}
-              </Typography>
-              <Typography variant="body1">
-                Unit: {selectedInvoice.unit}
-              </Typography>
-              <Typography variant="body1">
-                Rate: {selectedInvoice.rate}
-              </Typography>
-              <Typography variant="body1">
-                Total: {selectedInvoice.total}
-              </Typography>
-            </div>
+            <>
+              <DialogContentText>
+                <strong>Company Name:</strong> {selectedInvoice.companyName}
+              </DialogContentText>
+              <DialogContentText>
+                <strong>Date:</strong>{" "}
+                {format(new Date(selectedInvoice.date), "dd-MM-yyyy")}
+              </DialogContentText>
+              <DialogContentText>
+                <strong>Description:</strong> {selectedInvoice.description}
+              </DialogContentText>
+              <DialogContentText>
+                <strong>Unit:</strong> {selectedInvoice.unit}
+              </DialogContentText>
+              <DialogContentText>
+                <strong>Rate:</strong> {selectedInvoice.rate}
+              </DialogContentText>
+              <DialogContentText>
+                <strong>Total:</strong> {selectedInvoice.total}
+              </DialogContentText>
+            </>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleViewDialogClose} color="primary">
-            Close
-          </Button>
+          <Button onClick={handleViewDialogClose}>Close</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={handleDeleteDialogClose}>
-        <DialogTitle>Delete Quotation</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this quotation?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteDialogClose} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleDelete} color="secondary">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for Alerts */}
+      {/* Snackbar */}
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={6000}
+        autoHideDuration={3000}
         onClose={handleSnackbarClose}
       >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
           {snackbarMessage}
         </Alert>
       </Snackbar>

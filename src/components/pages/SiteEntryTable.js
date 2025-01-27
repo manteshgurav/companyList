@@ -26,6 +26,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import { Snackbar, Alert } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf"; // Import PDF icon
+import FileDownloadDoneIcon from "@mui/icons-material/FileDownloadDone"; // Import Excel icon
+import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
 
 const API_URL = "https://km-enterprices.onrender.com/siteEntries";
 
@@ -249,6 +253,72 @@ const TaxInvoiceTable = () => {
       .includes(search.toLowerCase());
   });
 
+  const exportToExcel = (invoice) => {
+    // Prepare the data in the format for Excel
+    const data = [
+      ["Material In", "Material Out", "Labour Entry"], // Headers
+      [invoice.materialIn, invoice.materialOut, invoice.labourEntry], // Data row
+    ];
+
+    // Create a new workbook
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Create a new workbook object
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Invoice Details");
+
+    // Export the data to an Excel file
+    XLSX.writeFile(wb, `Invoice_${invoice.invoiceNo}_Details.xlsx`);
+  };
+
+  const exportToPDF = (invoice) => {
+    const doc = new jsPDF();
+
+    // Header with custom title (KM Enterprises)
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("KM Enterprises", 10, 10);
+
+    // Draw a line under the header
+    doc.setLineWidth(0.5);
+    doc.line(10, 15, 200, 15);
+
+    // Add the invoice title
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Invoice Details", 10, 30);
+
+    // Create table headers with background color
+    doc.setFillColor(0, 123, 255); // Blue background for headers
+    doc.setTextColor(255, 255, 255); // White text color
+    doc.rect(10, 35, 190, 10, "F"); // Table header background
+    doc.text("Material In", 10, 40);
+    doc.text("Material Out", 60, 40);
+    doc.text("Labour Entry", 110, 40);
+
+    // Table row for the data
+    doc.setTextColor(0, 0, 0); // Reset text color to black for data
+    doc.text(`${invoice.materialIn}`, 10, 50);
+    doc.text(`${invoice.materialOut}`, 60, 50);
+    doc.text(`${invoice.labourEntry}`, 110, 50);
+
+    // Add a line under the content
+    doc.setLineWidth(0.5);
+    doc.line(10, 55, 200, 55);
+
+    // Footer with page number
+    const pageCount = doc.internal.getNumberOfPages();
+    doc.setFontSize(10);
+    doc.text(
+      `Page ${pageCount}`,
+      doc.internal.pageSize.width - 20,
+      doc.internal.pageSize.height - 10
+    );
+
+    // Save the PDF with the file name
+    doc.save(`Invoice_${invoice.invoiceNo}_Details.pdf`);
+  };
+
   return (
     <Box sx={{ padding: "20px", overflowX: "auto" }}>
       <Grid
@@ -355,28 +425,57 @@ const TaxInvoiceTable = () => {
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((invoice) => (
                     <TableRow key={invoice._id}>
-                      <TableCell>{invoice.materialIn}</TableCell>
-                      <TableCell>{invoice.materialOut}</TableCell>
-                      <TableCell>{invoice.labourEntry}</TableCell>
+                      {/* Material In Column */}
+                      <TableCell sx={{ textAlign: "center", padding: "8px" }}>
+                        {invoice.materialIn}
+                      </TableCell>
+                      {/* Material Out Column */}
+                      <TableCell sx={{ textAlign: "center", padding: "8px" }}>
+                        {invoice.materialOut}
+                      </TableCell>
+                      {/* Labour Entry Column */}
+                      <TableCell sx={{ textAlign: "center", padding: "8px" }}>
+                        {invoice.labourEntry}
+                      </TableCell>
+                      {/* Actions Column */}
                       <TableCell
-                        sx={{ textAlign: "center" }}
-                        style={{ display: "flex" }}
+                        sx={{
+                          textAlign: "center",
+                          padding: "8px",
+                          display: "flex",
+                          justifyContent: "center",
+                          gap: "8px",
+                        }}
                       >
+                        {/* PDF Export Icon */}
                         <IconButton
+                          onClick={() => exportToPDF(invoice)}
                           color="primary"
-                          onClick={() => handleViewDialogOpen(invoice)}
+                          sx={{ fontSize: "20px" }}
                         >
-                          <VisibilityIcon />
+                          <PictureAsPdfIcon />
                         </IconButton>
+                        {/* Excel Export Icon */}
+                        <IconButton
+                          onClick={() => exportToExcel(invoice)}
+                          color="primary"
+                          sx={{ fontSize: "20px" }}
+                        >
+                          <FileDownloadDoneIcon />
+                        </IconButton>
+                        {/* Edit Icon */}
                         <IconButton
                           color="secondary"
                           onClick={() => handleDialogOpenEdit(invoice)}
+                          sx={{ fontSize: "20px" }}
                         >
                           <EditIcon />
                         </IconButton>
+                        {/* Delete Icon */}
                         <IconButton
                           color="error"
                           onClick={() => handleDeleteDialogOpen(invoice)}
+                          sx={{ fontSize: "20px" }}
                         >
                           <DeleteIcon />
                         </IconButton>
