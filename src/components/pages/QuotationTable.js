@@ -21,6 +21,10 @@ import {
   IconButton,
   DialogContentText,
   CircularProgress,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { Snackbar, Alert } from "@mui/material";
@@ -32,11 +36,23 @@ import { utils, writeFile } from "xlsx"; // Excel Export Library
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf"; // Import PDF icon
 import FileDownloadDoneIcon from "@mui/icons-material/FileDownloadDone"; // Import Excel icon
 import { Email as EmailIcon } from "@mui/icons-material"; // Add Email icon
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 
-const API_URL = "https://km-enterprices.onrender.com/quotations";
+const API_URL = "http://localhost:5000/quotations";
 
 const TaxInvoiceTable = () => {
   const [tableData, setTableData] = useState([]);
+
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [filteredData, setFilteredData] = useState(tableData);
+  // Extract unique company names and dates from tableData
+  const companies = [
+    ...new Set(tableData.map((invoice) => invoice.companyName)),
+  ];
+  const dates = [...new Set(tableData.map((invoice) => invoice.date))];
+
   const [search, setSearch] = useState("");
   const [gmail, setGmail] = useState("");
   const [order, setOrder] = useState("asc");
@@ -59,17 +75,97 @@ const TaxInvoiceTable = () => {
     date: "",
     description: "",
     unit: "",
+    qty: "",
     rate: "",
     total: "",
   });
   const [invoiceData, setInvoiceData] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const [mode, setMode] = useState("add");
+
+  const [rows, setRows] = useState([
+    {
+      companyName: "",
+      date: new Date().toISOString().split("T")[0],
+      description: "",
+      unit: "",
+      qty: "",
+      rate: "",
+      total: "",
+    },
+  ]);
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  const handleAddRow = () => {
+    setRows([
+      ...rows,
+      {
+        companyName: "",
+        date: new Date().toISOString().split("T")[0],
+        description: "",
+        unit: "",
+        qty: "",
+        rate: "",
+        total: "",
+      },
+    ]);
+  };
+
+  useEffect(() => {
+    setFilteredData(tableData);
+  }, [tableData]);
+
+  const handleApplyFilter = () => {
+    let filtered = tableData;
+
+    if (selectedCompany) {
+      filtered = filtered.filter(
+        (invoice) => invoice.companyName === selectedCompany
+      );
+    }
+
+    if (selectedDate) {
+      filtered = filtered.filter((invoice) => invoice.date === selectedDate);
+    }
+
+    setFilteredData(filtered);
+    setPage(0); // Reset page to 0 after applying filters
+  };
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Filtered Quotations", 10, 10);
+
+    let y = 20;
+    filteredData.forEach((invoice) => {
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Company: ${invoice.companyName}`, 10, y);
+      doc.text(
+        `Date: ${format(new Date(invoice.date), "dd-MM-yyyy")}`,
+        10,
+        y + 10
+      );
+      doc.text(`Description: ${invoice.description}`, 10, y + 20);
+      doc.text(`Unit: ${invoice.unit}`, 10, y + 30);
+      doc.text(`Qty: ${invoice.qty}`, 10, y + 40);
+      doc.text(`Total: ${invoice.total}`, 10, y + 50);
+      y += 60;
+    });
+
+    doc.save("Filtered_Quotations.pdf");
+  };
+
+  const handleRemoveRow = (index) => {
+    const newRows = rows.filter((_, i) => i !== index);
+    setRows(newRows);
+  };
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -78,6 +174,7 @@ const TaxInvoiceTable = () => {
 
       if (Array.isArray(data)) {
         setTableData(data);
+        setFilteredData(data);
       } else {
         console.error("Fetched data is not an array:", data);
         setTableData([]);
@@ -118,28 +215,45 @@ const TaxInvoiceTable = () => {
   };
 
   const handleDialogOpenAdd = () => {
-    setNewInvoice({
-      companyName: "",
-      date: "",
-      description: "",
-      unit: "",
-      rate: "",
-      total: "",
-    });
+    // Reset the rows state to its initial value
+    setRows([
+      {
+        companyName: "",
+        date: new Date().toISOString().split("T")[0], // Set today's date
+        description: "",
+        unit: "",
+        qty: "",
+        rate: "",
+        total: "",
+      },
+    ]);
+
+    // Set the mode to "add" and open the dialog
     setMode("add");
     setDialogOpen(true);
   };
 
   const handleDialogOpenEdit = (invoice) => {
-    setNewInvoice({
-      ...invoice,
-      date: new Date(invoice.date).toISOString().split("T")[0], // Format to YYYY-MM-DD
-    });
+    // Convert the invoice data into the format expected by the rows state
+    const invoiceRows = [
+      {
+        companyName: invoice.companyName,
+        date: new Date(invoice.date).toISOString().split("T")[0], // Format to YYYY-MM-DD
+        description: invoice.description,
+        unit: invoice.unit,
+        qty: invoice.qty,
+        rate: invoice.rate,
+        total: invoice.total,
+        _id: invoice._id, // Include the _id for editing
+      },
+    ];
+
+    // Set the rows state with the invoice data
+    setRows(invoiceRows);
+
+    // Set the mode to "edit" and open the dialog
     setMode("edit");
     setDialogOpen(true);
-  };
-  const handleGmailOpen = (invoice) => {
-    setDialogGmailpen(true);
   };
 
   const handleDialogClose = () => {
@@ -199,42 +313,89 @@ const TaxInvoiceTable = () => {
     }
   };
 
+  const validateFields = () => {
+    let tempErrors = {};
+
+    if (!newInvoice.companyName.trim())
+      tempErrors.companyName = "Company Name is required";
+    if (!newInvoice.date) tempErrors.date = "Date is required";
+    if (!newInvoice.description.trim())
+      tempErrors.description = "Description is required";
+    if (!newInvoice.unit.trim()) tempErrors.unit = "Unit is required";
+    if (!newInvoice.qty || isNaN(newInvoice.qty) || newInvoice.qty <= 0)
+      tempErrors.qty = "Enter a valid quantity";
+    if (!newInvoice.rate || isNaN(newInvoice.rate) || newInvoice.rate <= 0)
+      tempErrors.rate = "Enter a valid rate";
+
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0; // Returns true if no errors
+  };
+
   const handleAddInvoice = async () => {
+    const isValid = rows.every((row) => {
+      return (
+        row.companyName.trim() &&
+        row.date &&
+        row.description.trim() &&
+        row.unit.trim() &&
+        row.qty &&
+        row.rate
+      );
+    });
+
+    if (!isValid) {
+      showSnackbar(
+        "Validation failed. Please fill all required fields.",
+        "error"
+      );
+      return;
+    }
+
     try {
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newInvoice),
+        body: JSON.stringify(rows),
       });
+
       if (response.ok) {
-        const addedInvoice = await response.json();
-        setTableData([...tableData, addedInvoice]);
-        showSnackbar("Invoice added successfully!", "success");
+        const addedInvoices = await response.json();
+        setTableData([...addedInvoices, ...tableData]); // Update tableData with new data
+        showSnackbar("Invoices added successfully!", "success");
+        setRows([
+          {
+            companyName: "",
+            date: new Date().toISOString().split("T")[0],
+            description: "",
+            unit: "",
+            qty: "",
+            rate: "",
+            total: "",
+          },
+        ]);
+        handleDialogClose();
       } else {
-        showSnackbar("Failed to add invoice.", "error");
+        showSnackbar("Failed to add invoices.", "error");
       }
-      handleDialogClose();
     } catch (error) {
       console.error("Failed to add data:", error);
-      showSnackbar("Error adding invoice.", "error");
+      showSnackbar("Error adding invoices.", "error");
     }
   };
 
   const handleEditInvoice = async () => {
     try {
-      console.log("Sending PUT request with ID:", newInvoice._id); // Log the ID
-
-      const response = await fetch(`${API_URL}/${newInvoice._id}`, {
+      const response = await fetch(`${API_URL}/${rows[0]._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newInvoice),
+        body: JSON.stringify(rows[0]),
       });
 
       if (response.ok) {
-        const updatedInvoice = await response.json(); // Get the updated quotation
+        const updatedInvoice = await response.json();
         setTableData(
           tableData.map((item) =>
-            item._id === newInvoice._id ? updatedInvoice : item
+            item._id === rows[0]._id ? updatedInvoice : item
           )
         );
         showSnackbar("Quotation updated successfully!", "success");
@@ -252,9 +413,14 @@ const TaxInvoiceTable = () => {
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e, index) => {
     const { name, value } = e.target;
-    setNewInvoice({ ...newInvoice, [name]: value });
+    const newRows = [...rows];
+    newRows[index][name] = value;
+    if (name === "qty" || name === "rate") {
+      newRows[index].total = newRows[index].qty * newRows[index].rate || 0;
+    }
+    setRows(newRows);
   };
   const handleGmailChange = (e) => {
     setGmail(e.target.value);
@@ -279,7 +445,8 @@ const TaxInvoiceTable = () => {
     doc.text(`Date: ${format(new Date(invoice.date), "dd-MM-yyyy")}`, 10, 40);
     doc.text(`Description: ${invoice.description}`, 10, 50);
     doc.text(`Unit: ${invoice.unit}`, 10, 60);
-    doc.text(`Rate: ${invoice.rate}`, 10, 70);
+    doc.text(`Unit: ${invoice.unit}`, 10, 60);
+    doc.text(`Qty: ${invoice.qty}`, 10, 70);
     doc.text(`Total: ${invoice.total}`, 10, 80);
 
     // Add a footer
@@ -317,16 +484,10 @@ const TaxInvoiceTable = () => {
     { id: "date", label: "Date" },
     { id: "description", label: "Description" },
     { id: "unit", label: "Unit" },
+    { id: "qty", label: "Qty" },
     { id: "rate", label: "Rate" },
     { id: "total", label: "Total" },
   ];
-
-  const filteredData = tableData.filter((invoice) => {
-    return Object.values(invoice)
-      .join(" ")
-      .toLowerCase()
-      .includes(search.toLowerCase());
-  });
 
   const sendEmail = () => {
     // Logic to send PDF and Excel files via email
@@ -342,6 +503,14 @@ const TaxInvoiceTable = () => {
     // Open the user's email client with the pre-filled details
     window.location.href = mailtoLink;
     setDialogGmailpen(false);
+  };
+
+  const handleResetFilter = () => {
+    // Reset the filter dropdown values
+    setSelectedCompany("");
+    setSelectedDate("");
+
+    fetchData();
   };
 
   return (
@@ -392,6 +561,73 @@ const TaxInvoiceTable = () => {
           </Grid>
         </Grid>
       </Grid>
+
+      <Grid container spacing={2} sx={{ marginBottom: "20px" }}>
+        <Grid item xs={12} sm={4}>
+          <FormControl fullWidth>
+            <InputLabel>Company</InputLabel>
+            <Select
+              value={selectedCompany}
+              onChange={(e) => setSelectedCompany(e.target.value)}
+              label="Company"
+            >
+              <MenuItem value="">All Companies</MenuItem>
+              {companies.map((company) => (
+                <MenuItem key={company} value={company}>
+                  {company}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <FormControl fullWidth>
+            <InputLabel>Date</InputLabel>
+            <Select
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              label="Date"
+            >
+              <MenuItem value="">All Dates</MenuItem>
+              {dates.map((date) => (
+                <MenuItem key={date} value={date}>
+                  {format(new Date(date), "dd-MM-yyyy")}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleApplyFilter}
+            sx={{ width: "100%", height: "56px" }}
+          >
+            Apply
+          </Button>
+        </Grid>
+        <Grid item xs={12} sm={2}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleResetFilter}
+            sx={{ width: "100%", height: "56px" }}
+          >
+            Reset Filter
+          </Button>
+        </Grid>
+        <Grid item xs={12} sm={2}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleDownloadPDF}
+            sx={{ width: "100%", height: "56px" }}
+          >
+            Download PDF
+          </Button>
+        </Grid>
+      </Grid>
       {loading ? (
         <Box
           sx={{
@@ -433,6 +669,7 @@ const TaxInvoiceTable = () => {
                     </TableCell>
                     <TableCell>{invoice.description}</TableCell>
                     <TableCell>{invoice.unit}</TableCell>
+                    <TableCell>{invoice.qty}</TableCell>
                     <TableCell>{invoice.rate}</TableCell>
                     <TableCell>{invoice.total}</TableCell>
                     <TableCell
@@ -498,76 +735,142 @@ const TaxInvoiceTable = () => {
       />
 
       {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={handleDialogClose}>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        className="quotation-dialog"
+        PaperProps={{
+          sx: {
+            width: "95%",
+            maxWidth: "1200px",
+            overflowX: "auto",
+            p: 2,
+          },
+        }}
+      >
         <DialogTitle>
           {mode === "add" ? "Add Quotation" : "Edit Quotation"}
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                label="Company Name"
-                name="companyName"
-                value={newInvoice.companyName}
-                onChange={handleInputChange}
-                fullWidth
-              />
+        <DialogContent
+          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+        >
+          {rows.map((row, index) => (
+            <Grid
+              container
+              spacing={1}
+              key={index}
+              sx={{
+                display: "flex",
+                flexWrap: { xs: "wrap", md: "nowrap" },
+                alignItems: "center",
+                gap: 1,
+                mb: 2,
+                borderBottom: "1px solid #ddd",
+                pb: 1,
+              }}
+            >
+              <Grid item xs={12} sm={2}>
+                <TextField
+                  label="Company"
+                  name="companyName"
+                  value={row.companyName}
+                  onChange={(e) => handleInputChange(e, index)}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={6} sm={2}>
+                <TextField
+                  label="Date"
+                  name="date"
+                  type="date"
+                  value={row.date}
+                  onChange={(e) => handleInputChange(e, index)}
+                  size="small"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  label="Description"
+                  name="description"
+                  value={row.description}
+                  onChange={(e) => handleInputChange(e, index)}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={4} sm={1}>
+                <TextField
+                  label="Unit"
+                  name="unit"
+                  value={row.unit}
+                  onChange={(e) => handleInputChange(e, index)}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={4} sm={1}>
+                <TextField
+                  label="Qty"
+                  name="qty"
+                  type="number"
+                  value={row.qty}
+                  onChange={(e) => handleInputChange(e, index)}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={4} sm={1}>
+                <TextField
+                  label="Rate"
+                  name="rate"
+                  type="number"
+                  value={row.rate}
+                  onChange={(e) => handleInputChange(e, index)}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={6} sm={2}>
+                <TextField
+                  label="Total"
+                  name="total"
+                  value={row.qty * row.rate || 0}
+                  disabled
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              {mode === "add" && (
+                <Grid
+                  item
+                  xs={6}
+                  sm={1}
+                  sx={{ display: "flex", justifyContent: "center" }}
+                >
+                  <IconButton onClick={() => handleRemoveRow(index)}>
+                    <RemoveIcon />
+                  </IconButton>
+                  {index === rows.length - 1 && (
+                    <IconButton onClick={handleAddRow}>
+                      <AddIcon />
+                    </IconButton>
+                  )}
+                </Grid>
+              )}
             </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Date"
-                name="date"
-                value={newInvoice.date} // Properly formatted date for input
-                onChange={handleInputChange}
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                name="description"
-                value={newInvoice.description}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Unit"
-                name="unit"
-                value={newInvoice.unit}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Rate"
-                name="rate"
-                value={newInvoice.rate}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Total"
-                name="total"
-                value={newInvoice.total}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-          </Grid>
+          ))}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Cancel</Button>
           <Button
-            onClick={mode === "add" ? handleAddInvoice : handleEditInvoice}
+            onClick={mode === "add" ? handleAddInvoice : handleEditInvoice} // Conditionally call the correct function
+            variant="contained"
+            color="primary"
           >
-            {mode === "add" ? "Add" : "Save"}
+            {mode === "add" ? "Add to Table" : "Update Quotation"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -628,6 +931,9 @@ const TaxInvoiceTable = () => {
               </DialogContentText>
               <DialogContentText>
                 <strong>Unit:</strong> {selectedInvoice.unit}
+              </DialogContentText>
+              <DialogContentText>
+                <strong>Qty:</strong> {selectedInvoice.qty}
               </DialogContentText>
               <DialogContentText>
                 <strong>Rate:</strong> {selectedInvoice.rate}
