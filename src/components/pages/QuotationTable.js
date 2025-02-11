@@ -39,7 +39,7 @@ import { Email as EmailIcon } from "@mui/icons-material"; // Add Email icon
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 
-const API_URL = "http://localhost:5000/quotations";
+const API_URL = "https://km-enterprices.onrender.com/quotations";
 
 const TaxInvoiceTable = () => {
   const [tableData, setTableData] = useState([]);
