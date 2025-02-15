@@ -1,16 +1,12 @@
 import React from "react";
 import Navbar from "./components/Navbar";
 import "./App.css";
-import TaxInvoice from "./components/pages/TaxInvoice";
-import PurchaseBill from "./components/pages/PurchaseBill";
-import Quotation from "./components/pages/Quotation";
+import TexInvoiceTable from "./components/pages/TexInvoiceTable";
 import QuotationTable from "./components/pages/QuotationTable";
-import SiteEntryTable from "./components/pages/SiteEntryTable";
-import Ledger from "./components/pages/Ledger";
-import LaborSupply from "./components/pages/LaborSupply";
+import MaterialInTable from "./components/pages/MaterialInTable";
+import MaterialOutTable from "./components/pages/MaterialOutTable";
 import Services from "./components/pages/Services";
 import Products from "./components/pages/Products";
-import SignUp from "./components/pages/SignUp";
 import Home from "./components/pages/Home";
 import LoginPage from "./components/pages/LoginPage";
 import {
@@ -36,31 +32,25 @@ function App() {
           {/* Restricted Routes */}
           <Route
             path="/tax-invoice"
-            element={isLoggedIn ? <TaxInvoice /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/purchase-bill"
-            element={isLoggedIn ? <PurchaseBill /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/quotation"
-            element={isLoggedIn ? <Quotation /> : <Navigate to="/login" />}
+            element={
+              isLoggedIn ? <TexInvoiceTable /> : <Navigate to="/login" />
+            }
           />
           <Route
             path="/quotationTable"
             element={isLoggedIn ? <QuotationTable /> : <Navigate to="/login" />}
           />
           <Route
-            path="/siteEntryTable"
-            element={isLoggedIn ? <SiteEntryTable /> : <Navigate to="/login" />}
+            path="/materialInTable"
+            element={
+              isLoggedIn ? <MaterialInTable /> : <Navigate to="/login" />
+            }
           />
           <Route
-            path="/ledger"
-            element={isLoggedIn ? <Ledger /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/labor-supply"
-            element={isLoggedIn ? <LaborSupply /> : <Navigate to="/login" />}
+            path="/materialOutTable"
+            element={
+              isLoggedIn ? <MaterialOutTable /> : <Navigate to="/login" />
+            }
           />
         </Routes>
       </Router>

@@ -40,7 +40,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 
 // const API_URL = "https://km-enterprices.onrender.com/quotations";
-const API_URL = "http://localhost:5000/quotations";
+const API_URL = "http://localhost:5000/taxInvoices";
 
 const TaxInvoiceTable = () => {
   const [tableData, setTableData] = useState([]);
@@ -50,9 +50,9 @@ const TaxInvoiceTable = () => {
   const [filteredData, setFilteredData] = useState(tableData);
   // Extract unique company names and dates from tableData
   const companies = [
-    ...new Set(tableData.map((invoice) => invoice.companyName)),
+    ...new Set(tableData.map((invoice) => invoice.invoiceDate)),
   ];
-  const dates = [...new Set(tableData.map((invoice) => invoice.date))];
+  const dates = [...new Set(tableData.map((invoice) => invoice.dueDate))];
 
   const [search, setSearch] = useState("");
   const [gmail, setGmail] = useState("");
@@ -72,13 +72,16 @@ const TaxInvoiceTable = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newInvoice, setNewInvoice] = useState({
-    companyName: "",
-    date: "",
-    description: "",
-    unit: "",
-    qty: "",
-    rate: "",
-    total: "",
+    invoiceNo: "",
+    workOrderNo: "",
+    invoiceDate: "",
+    itemDescription: "",
+    quantity: "",
+    unitPrice: "",
+    totalPrice: "",
+    taxRate: "",
+    invoiceStatus: "",
+    dueDate: "",
   });
   const [invoiceData, setInvoiceData] = useState(null);
   const [errors, setErrors] = useState({});
@@ -87,13 +90,16 @@ const TaxInvoiceTable = () => {
 
   const [rows, setRows] = useState([
     {
-      companyName: "",
-      date: new Date().toISOString().split("T")[0],
-      description: "",
-      unit: "",
-      qty: "",
-      rate: "",
-      total: "",
+      invoiceNo: "",
+      workOrderNo: "",
+      invoiceDate: "",
+      itemDescription: "",
+      quantity: "",
+      unitPrice: "",
+      totalPrice: "",
+      taxRate: "",
+      invoiceStatus: "",
+      dueDate: "",
     },
   ]);
 
@@ -105,13 +111,16 @@ const TaxInvoiceTable = () => {
     setRows([
       ...rows,
       {
-        companyName: "",
-        date: new Date().toISOString().split("T")[0],
-        description: "",
-        unit: "",
-        qty: "",
-        rate: "",
-        total: "",
+        invoiceNo: "",
+        workOrderNo: "",
+        invoiceDate: "",
+        itemDescription: "",
+        quantity: "",
+        unitPrice: "",
+        totalPrice: "",
+        taxRate: "",
+        invoiceStatus: "",
+        dueDate: "",
       },
     ]);
   };
@@ -125,12 +134,12 @@ const TaxInvoiceTable = () => {
 
     if (selectedCompany) {
       filtered = filtered.filter(
-        (invoice) => invoice.companyName === selectedCompany
+        (invoice) => invoice.invoiceDate === selectedCompany
       );
     }
 
     if (selectedDate) {
-      filtered = filtered.filter((invoice) => invoice.date === selectedDate);
+      filtered = filtered.filter((invoice) => invoice.dueDate === selectedDate);
     }
 
     setFilteredData(filtered);
@@ -202,11 +211,11 @@ const TaxInvoiceTable = () => {
     filteredData.forEach((invoice, index) => {
       const rowData = [
         index + 1,
-        invoice.description,
+        invoice.itemDescription,
         invoice.unit,
-        invoice.qty,
-        invoice.rate,
-        invoice.total,
+        invoice.quantity,
+        invoice.unitPrice,
+        invoice.totalPrice,
       ];
       tableRows.push(rowData);
     });
@@ -224,7 +233,7 @@ const TaxInvoiceTable = () => {
 
     // Add taxable amount and GST
     const taxableAmount = filteredData.reduce(
-      (sum, invoice) => sum + invoice.total,
+      (sum, invoice) => sum + invoice.totalPrice,
       0
     );
     const cgst = taxableAmount * 0.09;
@@ -355,13 +364,16 @@ const TaxInvoiceTable = () => {
     // Reset the rows state to its initial value
     setRows([
       {
-        companyName: "",
-        date: new Date().toISOString().split("T")[0], // Set today's date
-        description: "",
-        unit: "",
-        qty: "",
-        rate: "",
-        total: "",
+        invoiceNo: "",
+        workOrderNo: "",
+        invoiceDate: "",
+        itemDescription: "",
+        quantity: "",
+        unitPrice: "",
+        totalPrice: "",
+        taxRate: "",
+        invoiceStatus: "",
+        dueDate: "",
       },
     ]);
 
@@ -374,14 +386,17 @@ const TaxInvoiceTable = () => {
     // Convert the invoice data into the format expected by the rows state
     const invoiceRows = [
       {
-        companyName: invoice.companyName,
-        date: new Date(invoice.date).toISOString().split("T")[0], // Format to YYYY-MM-DD
-        description: invoice.description,
-        unit: invoice.unit,
-        qty: invoice.qty,
-        rate: invoice.rate,
-        total: invoice.total,
-        _id: invoice._id, // Include the _id for editing
+        invoiceNo: invoice.invoiceNo,
+        workOrderNo: invoice.workOrderNo,
+        invoiceDate: new Date(invoice.invoiceDate).toISOString().split("T")[0], // Format to YYYY-MM-DD
+        itemDescription: invoice.itemDescription,
+        quantity: invoice.quantity,
+        unitPrice: invoice.unitPrice,
+        totalPrice: invoice.totalPrice,
+        taxRate: invoice.taxRate,
+        invoiceStatus: invoice.invoiceStatus,
+        dueDate: new Date(invoice.dueDate).toISOString().split("T")[0], // Format to YYYY-MM-DD
+        _id: invoice._id,
       },
     ];
 
@@ -471,12 +486,11 @@ const TaxInvoiceTable = () => {
   const handleAddInvoice = async () => {
     const isValid = rows.every((row) => {
       return (
-        row.companyName.trim() &&
-        row.date &&
-        row.description.trim() &&
-        row.unit.trim() &&
-        row.qty &&
-        row.rate
+        row.invoiceDate &&
+        row.itemDescription.trim() &&
+        row.quantity &&
+        row.unitPrice &&
+        row.dueDate
       );
     });
 
@@ -501,13 +515,16 @@ const TaxInvoiceTable = () => {
         showSnackbar("Invoices added successfully!", "success");
         setRows([
           {
-            companyName: "",
-            date: new Date().toISOString().split("T")[0],
-            description: "",
-            unit: "",
-            qty: "",
-            rate: "",
-            total: "",
+            invoiceNo: "",
+            workOrderNo: "",
+            invoiceDate: "",
+            itemDescription: "",
+            quantity: "",
+            unitPrice: "",
+            totalPrice: "",
+            taxRate: "",
+            invoiceStatus: "",
+            dueDate: "",
           },
         ]);
         handleDialogClose();
@@ -535,18 +552,18 @@ const TaxInvoiceTable = () => {
             item._id === rows[0]._id ? updatedInvoice : item
           )
         );
-        showSnackbar("Quotation updated successfully!", "success");
+        showSnackbar("Tax Invoice updated successfully!", "success");
       } else {
         const errorData = await response.json();
         showSnackbar(
-          `Failed to update Quotation: ${errorData.message}`,
+          `Failed to update Tax Invoice: ${errorData.message}`,
           "error"
         );
       }
       handleDialogClose();
     } catch (error) {
       console.error("Failed to update data:", error);
-      showSnackbar("Error updating Quotation.", "error");
+      showSnackbar("Error updating Tax Invoice.", "error");
     }
   };
 
@@ -578,26 +595,20 @@ const TaxInvoiceTable = () => {
     // Set up the body content with invoice details
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.text(`Company: ${invoice.companyName}`, 10, 30);
-    doc.text(`Date: ${format(new Date(invoice.date), "dd-MM-yyyy")}`, 10, 40);
-    doc.text(`Description: ${invoice.description}`, 10, 50);
-    doc.text(`Unit: ${invoice.unit}`, 10, 60);
-    doc.text(`Unit: ${invoice.unit}`, 10, 60);
-    doc.text(`Qty: ${invoice.qty}`, 10, 70);
-    doc.text(`Total: ${invoice.total}`, 10, 80);
+    doc.text(`Invoice No: ${invoice.invoiceNo}`, 10, 30);
+    doc.text(`Work Order No: ${invoice.workOrderNo}`, 10, 40);
+    doc.text(`Invoice Date: ${invoice.invoiceDate}`, 10, 50);
+    doc.text(`Item Description: ${invoice.itemDescription}`, 10, 60);
+    doc.text(`Quantity: ${invoice.quantity}`, 10, 70);
+    doc.text(`Unit Price: ${invoice.unitPrice}`, 10, 80);
+    doc.text(`Total Price: ${invoice.totalPrice}`, 10, 90);
+    doc.text(`Tax Rate: ${invoice.taxRate}`, 10, 100);
+    doc.text(`Invoice Status: ${invoice.invoiceStatus}`, 10, 110);
+    doc.text(`Due Date: ${invoice.dueDate}`, 10, 120);
 
     // Add a footer
     const pageCount = doc.internal.getNumberOfPages();
     doc.setFontSize(10);
-
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("KM Enterprises", 10, 10);
-    doc.text(
-      "===========================================================",
-      10,
-      10
-    );
 
     doc.text(
       `Page ${pageCount}`,
@@ -606,30 +617,33 @@ const TaxInvoiceTable = () => {
     );
 
     // Save the PDF with the file name
-    doc.save(`${invoice.companyName}_Invoice.pdf`);
+    doc.save(`${invoice.invoiceNo}_Invoice.pdf`);
   };
 
   const exportToExcel = (invoice) => {
     const worksheet = utils.json_to_sheet([invoice]);
     const workbook = utils.book_new();
     utils.book_append_sheet(workbook, worksheet, "Invoice");
-    writeFile(workbook, `${invoice.companyName}_Invoice.xlsx`);
+    writeFile(workbook, `${invoice.invoiceNo}_Invoice.xlsx`);
   };
 
   const columns = [
-    { id: "companyName", label: "Company Name" },
-    { id: "date", label: "Date" },
-    { id: "description", label: "Description" },
-    { id: "unit", label: "Unit" },
-    { id: "qty", label: "Qty" },
-    { id: "rate", label: "Rate" },
-    { id: "total", label: "Total" },
+    { id: "invoiceNo", label: "Invoice No" },
+    { id: "workOrderNo", label: "Work Order No" },
+    { id: "invoiceDate", label: "Invoice Date" },
+    { id: "itemDescription", label: "Item Description" },
+    { id: "quantity", label: "Quantity" },
+    { id: "unitPrice", label: "Unit Price" },
+    { id: "totalPrice", label: "Total Price" },
+    { id: "taxRate", label: "Tax Rate" },
+    { id: "invoiceStatus", label: "Invoice Status" },
+    { id: "dueDate", label: "Due Date" },
   ];
 
   const sendEmail = () => {
     // Logic to send PDF and Excel files via email
     const email = gmail; // Replace with the actual email input from the user or a predefined email
-    const subject = `Quotation for ${invoiceData.companyName}`;
+    const subject = `Tax Invoice for ${invoiceData.companyName}`;
     const body = `Please find attached the PDF and Excel files for the quotation.\n\nDate: ${invoiceData.date}\nDescription: ${invoiceData.description}`;
 
     // Trigger mailto link to open the default email client with attachments (Note: mailto does not support attachments)
@@ -693,7 +707,7 @@ const TaxInvoiceTable = () => {
               onClick={handleDialogOpenAdd}
               sx={{ width: "100%" }}
             >
-              Add Quotation
+              Add Tax Invoice
             </Button>
           </Grid>
         </Grid>
@@ -702,16 +716,16 @@ const TaxInvoiceTable = () => {
       <Grid container spacing={2} sx={{ marginBottom: "20px" }}>
         <Grid item xs={12} sm={4}>
           <FormControl fullWidth>
-            <InputLabel>Company</InputLabel>
+            <InputLabel>Invoice Dates</InputLabel>
             <Select
               value={selectedCompany}
               onChange={(e) => setSelectedCompany(e.target.value)}
               label="Company"
             >
-              <MenuItem value="">All Companies</MenuItem>
+              <MenuItem value="">Due Dates</MenuItem>
               {companies.map((company) => (
                 <MenuItem key={company} value={company}>
-                  {company}
+                  {format(new Date(company), "dd-MM-yyyy")}
                 </MenuItem>
               ))}
             </Select>
@@ -719,7 +733,7 @@ const TaxInvoiceTable = () => {
         </Grid>
         <Grid item xs={12} sm={4}>
           <FormControl fullWidth>
-            <InputLabel>Date</InputLabel>
+            <InputLabel>Due Date</InputLabel>
             <Select
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
@@ -800,34 +814,28 @@ const TaxInvoiceTable = () => {
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((invoice) => (
                   <TableRow key={invoice._id}>
-                    <TableCell>{invoice.companyName}</TableCell>
+                    <TableCell>{invoice.invoiceNo}</TableCell>
+                    <TableCell>{invoice.workOrderNo}</TableCell>
                     <TableCell>
-                      {format(new Date(invoice.date), "dd-MM-yyyy")}
+                      {invoice.invoiceDate
+                        ? format(new Date(invoice.invoiceDate), "dd-MM-yyyy")
+                        : "Invalid Date"}
                     </TableCell>
-                    <TableCell>{invoice.description}</TableCell>
-                    <TableCell>{invoice.unit}</TableCell>
-                    <TableCell>{invoice.qty}</TableCell>
-                    <TableCell>{invoice.rate}</TableCell>
-                    <TableCell>{invoice.total}</TableCell>
+                    <TableCell>{invoice.itemDescription}</TableCell>
+                    <TableCell>{invoice.quantity}</TableCell>
+                    <TableCell>{invoice.unitPrice}</TableCell>
+                    <TableCell>{invoice.totalPrice}</TableCell>
+                    <TableCell>{invoice.taxRate}</TableCell>
+                    <TableCell>{invoice.invoiceStatus}</TableCell>
+                    <TableCell>
+                      {invoice.dueDate
+                        ? format(new Date(invoice.dueDate), "dd-MM-yyyy")
+                        : "Invalid Date"}
+                    </TableCell>
                     <TableCell
                       sx={{ textAlign: "center" }}
                       style={{ display: "flex" }}
                     >
-                      {/* <IconButton
-                      onClick={() => {
-                        setInvoiceData(invoice);
-                        handleGmailOpen();
-                      }}
-                      color="primary"
-                    >
-                      <EmailIcon />
-                    </IconButton> */}
-                      {/* <IconButton
-                      color="primary"
-                      onClick={() => handleViewDialogOpen(invoice)}
-                    >
-                      <VisibilityIcon />
-                    </IconButton> */}
                       <IconButton
                         onClick={() => exportToPDF(invoice)}
                         color="primary"
@@ -879,17 +887,21 @@ const TaxInvoiceTable = () => {
         PaperProps={{
           sx: {
             width: "95%",
-            maxWidth: "1200px",
+            maxWidth: "1400px",
             overflowX: "auto",
             p: 2,
           },
         }}
       >
         <DialogTitle>
-          {mode === "add" ? "Add Quotation" : "Edit Quotation"}
+          {mode === "add" ? "Add Tax Invoice" : "Edit Tax Invoice"}
         </DialogTitle>
         <DialogContent
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
         >
           {rows.map((row, index) => (
             <Grid
@@ -906,11 +918,21 @@ const TaxInvoiceTable = () => {
                 pb: 1,
               }}
             >
-              <Grid item xs={12} sm={2}>
+              <Grid item xs={12} sm={1}>
                 <TextField
-                  label="Company"
-                  name="companyName"
-                  value={row.companyName}
+                  label="Invoice No"
+                  name="invoiceNo"
+                  value={row.invoiceNo}
+                  onChange={(e) => handleInputChange(e, index)}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={1}>
+                <TextField
+                  label="Work Order No"
+                  name="workOrderNo"
+                  value={row.workOrderNo}
                   onChange={(e) => handleInputChange(e, index)}
                   size="small"
                   fullWidth
@@ -918,10 +940,10 @@ const TaxInvoiceTable = () => {
               </Grid>
               <Grid item xs={6} sm={2}>
                 <TextField
-                  label="Date"
-                  name="date"
+                  label="Invoice Date"
+                  name="invoiceDate"
                   type="date"
-                  value={row.date}
+                  value={row.invoiceDate}
                   onChange={(e) => handleInputChange(e, index)}
                   size="small"
                   fullWidth
@@ -931,8 +953,8 @@ const TaxInvoiceTable = () => {
               <Grid item xs={12} sm={3}>
                 <TextField
                   label="Description"
-                  name="description"
-                  value={row.description}
+                  name="itemDescription"
+                  value={row.itemDescription}
                   onChange={(e) => handleInputChange(e, index)}
                   size="small"
                   fullWidth
@@ -940,20 +962,10 @@ const TaxInvoiceTable = () => {
               </Grid>
               <Grid item xs={4} sm={1}>
                 <TextField
-                  label="Unit"
-                  name="unit"
-                  value={row.unit}
-                  onChange={(e) => handleInputChange(e, index)}
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={4} sm={1}>
-                <TextField
-                  label="Qty"
-                  name="qty"
+                  label="Quantity"
+                  name="quantity"
                   type="number"
-                  value={row.qty}
+                  value={row.quantity}
                   onChange={(e) => handleInputChange(e, index)}
                   size="small"
                   fullWidth
@@ -961,10 +973,41 @@ const TaxInvoiceTable = () => {
               </Grid>
               <Grid item xs={4} sm={1}>
                 <TextField
-                  label="Rate"
-                  name="rate"
+                  label="Unit Price"
+                  name="unitPrice"
                   type="number"
-                  value={row.rate}
+                  value={row.unitPrice}
+                  onChange={(e) => handleInputChange(e, index)}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={4} sm={1}>
+                <TextField
+                  label="Total Price"
+                  name="totalPrice"
+                  value={row.quantity * row.unitPrice || 0}
+                  disabled
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={4} sm={1}>
+                <TextField
+                  label="Tax Rate"
+                  name="taxRate"
+                  type="number"
+                  value={row.taxRate}
+                  onChange={(e) => handleInputChange(e, index)}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={4} sm={1}>
+                <TextField
+                  label="Invoice Status"
+                  name="invoiceStatus"
+                  value={row.invoiceStatus}
                   onChange={(e) => handleInputChange(e, index)}
                   size="small"
                   fullWidth
@@ -972,12 +1015,14 @@ const TaxInvoiceTable = () => {
               </Grid>
               <Grid item xs={6} sm={2}>
                 <TextField
-                  label="Total"
-                  name="total"
-                  value={row.qty * row.rate || 0}
-                  disabled
+                  label="Due Date"
+                  name="dueDate"
+                  type="date"
+                  value={row.dueDate}
+                  onChange={(e) => handleInputChange(e, index)}
                   size="small"
                   fullWidth
+                  InputLabelProps={{ shrink: true }}
                 />
               </Grid>
               {mode === "add" && (
@@ -1007,7 +1052,7 @@ const TaxInvoiceTable = () => {
             variant="contained"
             color="primary"
           >
-            {mode === "add" ? "Add to Table" : "Update Quotation"}
+            {mode === "add" ? "Add to Table" : "Update Tax Invoice"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1020,7 +1065,7 @@ const TaxInvoiceTable = () => {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          {"Delete this Quotation?"}
+          {"Delete this Tax Invoice?"}
         </DialogTitle>
         <DialogActions>
           <Button onClick={handleDeleteDialogClose}>Cancel</Button>
@@ -1052,7 +1097,7 @@ const TaxInvoiceTable = () => {
 
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onClose={handleViewDialogClose}>
-        <DialogTitle>View Quotation</DialogTitle>
+        <DialogTitle>View Tax Invoice</DialogTitle>
         <DialogContent>
           {selectedInvoice && (
             <>

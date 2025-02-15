@@ -113,11 +113,22 @@ function Navbar() {
             {isLoggedIn && (
               <li className="nav-item">
                 <Link
-                  to="/siteEntryTable"
+                  to="/materialInTable"
                   className="nav-links"
                   onClick={closeMobileMenu}
                 >
-                  Site Entry
+                  MaterialIn Table
+                </Link>
+              </li>
+            )}
+            {isLoggedIn && (
+              <li className="nav-item">
+                <Link
+                  to="/materialOutTable"
+                  className="nav-links"
+                  onClick={closeMobileMenu}
+                >
+                  materialOut Table
                 </Link>
               </li>
             )}

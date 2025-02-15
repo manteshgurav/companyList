@@ -38,9 +38,10 @@ import FileDownloadDoneIcon from "@mui/icons-material/FileDownloadDone"; // Impo
 import { Email as EmailIcon } from "@mui/icons-material"; // Add Email icon
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
+import "jspdf-autotable";
 
 // const API_URL = "https://km-enterprices.onrender.com/quotations";
-const API_URL = "http://localhost:5000/quotations";
+const API_URL = "http://localhost:5000/MaterialOut";
 
 const TaxInvoiceTable = () => {
   const [tableData, setTableData] = useState([]);
@@ -49,10 +50,10 @@ const TaxInvoiceTable = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [filteredData, setFilteredData] = useState(tableData);
   // Extract unique company names and dates from tableData
-  const companies = [
-    ...new Set(tableData.map((invoice) => invoice.companyName)),
+  const materialDates = [...new Set(tableData.map((invoice) => invoice.date))];
+  const materialDetailsData = [
+    ...new Set(tableData.map((invoice) => invoice.materialDetails)),
   ];
-  const dates = [...new Set(tableData.map((invoice) => invoice.date))];
 
   const [search, setSearch] = useState("");
   const [gmail, setGmail] = useState("");
@@ -72,13 +73,10 @@ const TaxInvoiceTable = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newInvoice, setNewInvoice] = useState({
-    companyName: "",
     date: "",
-    description: "",
-    unit: "",
+    materialDetails: "",
     qty: "",
-    rate: "",
-    total: "",
+    amt: "",
   });
   const [invoiceData, setInvoiceData] = useState(null);
   const [errors, setErrors] = useState({});
@@ -87,13 +85,10 @@ const TaxInvoiceTable = () => {
 
   const [rows, setRows] = useState([
     {
-      companyName: "",
       date: new Date().toISOString().split("T")[0],
-      description: "",
-      unit: "",
+      materialDetails: "",
       qty: "",
-      rate: "",
-      total: "",
+      amt: "",
     },
   ]);
 
@@ -105,13 +100,10 @@ const TaxInvoiceTable = () => {
     setRows([
       ...rows,
       {
-        companyName: "",
         date: new Date().toISOString().split("T")[0],
-        description: "",
-        unit: "",
+        materialDetails: "",
         qty: "",
-        rate: "",
-        total: "",
+        amt: "",
       },
     ]);
   };
@@ -124,13 +116,13 @@ const TaxInvoiceTable = () => {
     let filtered = tableData;
 
     if (selectedCompany) {
-      filtered = filtered.filter(
-        (invoice) => invoice.companyName === selectedCompany
-      );
+      filtered = filtered.filter((invoice) => invoice.date === selectedCompany);
     }
 
     if (selectedDate) {
-      filtered = filtered.filter((invoice) => invoice.date === selectedDate);
+      filtered = filtered.filter(
+        (invoice) => invoice.materialDetails === selectedDate
+      );
     }
 
     setFilteredData(filtered);
@@ -188,70 +180,34 @@ const TaxInvoiceTable = () => {
     doc.text("P.O Date: 21/11/2023", 150, 90);
 
     // Define table columns
-    const tableColumn = [
-      "S.L NO",
-      "DESCRIPTION",
-      "UNIT",
-      "QTY",
-      "RATE (Rupees)",
-      "TOTAL AMOUNT",
-    ];
-    const tableRows = [];
+    const tableColumn = ["Date", "Material Details", "Qty", "Amount"];
 
     // Prepare table rows
-    filteredData.forEach((invoice, index) => {
-      const rowData = [
-        index + 1,
-        invoice.description,
-        invoice.unit,
-        invoice.qty,
-        invoice.rate,
-        invoice.total,
-      ];
-      tableRows.push(rowData);
-    });
+    const tableRows = filteredData.map((invoice) => [
+      format(new Date(invoice.date), "dd-MM-yyyy"),
+      invoice.materialDetails,
+      invoice.qty,
+      invoice.amt,
+    ]);
 
-    // Add table to PDF
+    // Generate table with borders
     doc.autoTable({
-      startY: 100,
       head: [tableColumn],
       body: tableRows,
-      theme: "grid",
+      startY: 100, // Adjusted startY to prevent overlapping
+      theme: "grid", // Adds border to cells
       styles: { fontSize: 10, cellPadding: 2 },
       headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] }, // Black header with white text
       alternateRowStyles: { fillColor: [240, 240, 240] }, // Light gray alternate row
     });
 
-    // Add taxable amount and GST
-    const taxableAmount = filteredData.reduce(
-      (sum, invoice) => sum + invoice.total,
-      0
-    );
-    const cgst = taxableAmount * 0.09;
-    const sgst = taxableAmount * 0.09;
-    const totalAmount = taxableAmount + cgst + sgst;
-
-    doc.setFontSize(10);
-    doc.text(
-      `TAXABLE AMOUNT: ${taxableAmount.toFixed(2)}`,
-      10,
-      doc.autoTable.previous.finalY + 10
-    );
-    doc.text(
-      `ADD: CGST @ 9%: ${cgst.toFixed(2)}`,
-      10,
-      doc.autoTable.previous.finalY + 20
-    );
-    doc.text(
-      `ADD: SGST @ 9%: ${sgst.toFixed(2)}`,
-      10,
-      doc.autoTable.previous.finalY + 30
-    );
-    doc.text(
-      `TOTAL: ${totalAmount.toFixed(2)}`,
-      10,
-      doc.autoTable.previous.finalY + 40
-    );
+    // Get today's date in dd-MM-yyyy format
+    const today = new Date();
+    const formattedDate = `${today.getDate().toString().padStart(2, "0")}-${(
+      today.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}-${today.getFullYear()}`;
 
     // Add footer with bank details
     doc.setFontSize(10);
@@ -280,8 +236,7 @@ const TaxInvoiceTable = () => {
     doc.text("Yours faithfully", 10, doc.autoTable.previous.finalY + 150);
     doc.text("For K.M ENTERPRISES", 10, doc.autoTable.previous.finalY + 160);
 
-    // Save the PDF
-    doc.save("Invoice.pdf");
+    doc.save(`MaterialIn_${formattedDate}.pdf`);
   };
 
   const handleRemoveRow = (index) => {
@@ -295,8 +250,9 @@ const TaxInvoiceTable = () => {
       const data = await response.json();
 
       if (Array.isArray(data)) {
-        setTableData(data);
-        setFilteredData(data);
+        const reversedData = [...data].reverse(); // Reverse once and store
+        setTableData(reversedData); // Reverse to show newest data first
+        setFilteredData(reversedData); // Ensure filters also use reversed data
       } else {
         console.error("Fetched data is not an array:", data);
         setTableData([]);
@@ -313,15 +269,15 @@ const TaxInvoiceTable = () => {
     const searchText = e.target.value.toLowerCase();
     setSearch(searchText);
 
-    // Filter the tableData based on the search input across all fields
+    // Filter the tableData based on the search input
     const filtered = tableData.filter((invoice) => {
-      // Check if any field in the invoice contains the search text
-      return Object.values(invoice).some((value) => {
-        if (typeof value === "string" || typeof value === "number") {
-          return value.toString().toLowerCase().includes(searchText);
-        }
-        return false;
-      });
+      return (
+        (invoice.date && invoice.date.toLowerCase().includes(searchText)) ||
+        (invoice.materialDetails &&
+          invoice.materialDetails.toLowerCase().includes(searchText)) ||
+        (invoice.qty && invoice.qty.toString().includes(searchText)) ||
+        (invoice.amt && invoice.amt.toString().includes(searchText))
+      );
     });
 
     setFilteredData(filtered);
@@ -355,13 +311,10 @@ const TaxInvoiceTable = () => {
     // Reset the rows state to its initial value
     setRows([
       {
-        companyName: "",
-        date: new Date().toISOString().split("T")[0], // Set today's date
-        description: "",
-        unit: "",
+        date: new Date().toISOString().split("T")[0],
+        materialDetails: "",
         qty: "",
-        rate: "",
-        total: "",
+        amt: "",
       },
     ]);
 
@@ -374,13 +327,10 @@ const TaxInvoiceTable = () => {
     // Convert the invoice data into the format expected by the rows state
     const invoiceRows = [
       {
-        companyName: invoice.companyName,
-        date: new Date(invoice.date).toISOString().split("T")[0], // Format to YYYY-MM-DD
-        description: invoice.description,
-        unit: invoice.unit,
+        date: new Date(invoice.date).toISOString().split("T")[0], // Format to YYYY-MM-DD,
+        materialDetails: invoice.materialDetails,
         qty: invoice.qty,
-        rate: invoice.rate,
-        total: invoice.total,
+        amt: invoice.amt,
         _id: invoice._id, // Include the _id for editing
       },
     ];
@@ -469,16 +419,9 @@ const TaxInvoiceTable = () => {
   };
 
   const handleAddInvoice = async () => {
-    const isValid = rows.every((row) => {
-      return (
-        row.companyName.trim() &&
-        row.date &&
-        row.description.trim() &&
-        row.unit.trim() &&
-        row.qty &&
-        row.rate
-      );
-    });
+    const isValid = rows.every(
+      (row) => row.date && row.materialDetails.trim() && row.qty
+    );
 
     if (!isValid) {
       showSnackbar(
@@ -492,22 +435,21 @@ const TaxInvoiceTable = () => {
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(rows),
+        body: JSON.stringify(rows), // Send all rows
       });
 
       if (response.ok) {
-        const addedInvoices = await response.json();
-        setTableData([...addedInvoices, ...tableData]); // Update tableData with new data
+        const addedInvoices = await response.json(); // Expecting multiple objects
+
+        setTableData([...tableData, ...addedInvoices]); // Append new data
         showSnackbar("Invoices added successfully!", "success");
+
         setRows([
           {
-            companyName: "",
             date: new Date().toISOString().split("T")[0],
-            description: "",
-            unit: "",
+            materialDetails: "",
             qty: "",
-            rate: "",
-            total: "",
+            amt: "",
           },
         ]);
         handleDialogClose();
@@ -522,31 +464,38 @@ const TaxInvoiceTable = () => {
 
   const handleEditInvoice = async () => {
     try {
-      const response = await fetch(`${API_URL}/${rows[0]._id}`, {
+      // Ensure amt is a number, not an array
+      const updatedRow = {
+        ...rows[0],
+        amt: Number(rows[0].amt), // Convert to a number explicitly
+      };
+
+      const response = await fetch(`${API_URL}/${updatedRow._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(rows[0]),
+        body: JSON.stringify(updatedRow), // Send corrected object
       });
 
       if (response.ok) {
         const updatedInvoice = await response.json();
         setTableData(
           tableData.map((item) =>
-            item._id === rows[0]._id ? updatedInvoice : item
+            item._id === updatedRow._id ? updatedInvoice : item
           )
         );
-        showSnackbar("Quotation updated successfully!", "success");
+        showSnackbar("Material Out updated successfully!", "success");
       } else {
         const errorData = await response.json();
         showSnackbar(
-          `Failed to update Quotation: ${errorData.message}`,
+          `Failed to update Material Out: ${errorData.message}`,
           "error"
         );
       }
+
       handleDialogClose();
     } catch (error) {
       console.error("Failed to update data:", error);
-      showSnackbar("Error updating Quotation.", "error");
+      showSnackbar("Error updating Material Out.", "error");
     }
   };
 
@@ -554,9 +503,6 @@ const TaxInvoiceTable = () => {
     const { name, value } = e.target;
     const newRows = [...rows];
     newRows[index][name] = value;
-    if (name === "qty" || name === "rate") {
-      newRows[index].total = newRows[index].qty * newRows[index].rate || 0;
-    }
     setRows(newRows);
   };
   const handleGmailChange = (e) => {
@@ -584,7 +530,6 @@ const TaxInvoiceTable = () => {
     doc.text(`Unit: ${invoice.unit}`, 10, 60);
     doc.text(`Unit: ${invoice.unit}`, 10, 60);
     doc.text(`Qty: ${invoice.qty}`, 10, 70);
-    doc.text(`Total: ${invoice.total}`, 10, 80);
 
     // Add a footer
     const pageCount = doc.internal.getNumberOfPages();
@@ -617,19 +562,16 @@ const TaxInvoiceTable = () => {
   };
 
   const columns = [
-    { id: "companyName", label: "Company Name" },
     { id: "date", label: "Date" },
-    { id: "description", label: "Description" },
-    { id: "unit", label: "Unit" },
+    { id: "materialDetails", label: "Material Details" },
     { id: "qty", label: "Qty" },
-    { id: "rate", label: "Rate" },
-    { id: "total", label: "Total" },
+    { id: "amt", label: "Amount" },
   ];
 
   const sendEmail = () => {
     // Logic to send PDF and Excel files via email
     const email = gmail; // Replace with the actual email input from the user or a predefined email
-    const subject = `Quotation for ${invoiceData.companyName}`;
+    const subject = `Material Out for ${invoiceData.companyName}`;
     const body = `Please find attached the PDF and Excel files for the quotation.\n\nDate: ${invoiceData.date}\nDescription: ${invoiceData.description}`;
 
     // Trigger mailto link to open the default email client with attachments (Note: mailto does not support attachments)
@@ -693,7 +635,7 @@ const TaxInvoiceTable = () => {
               onClick={handleDialogOpenAdd}
               sx={{ width: "100%" }}
             >
-              Add Quotation
+              Add Material Out
             </Button>
           </Grid>
         </Grid>
@@ -702,16 +644,16 @@ const TaxInvoiceTable = () => {
       <Grid container spacing={2} sx={{ marginBottom: "20px" }}>
         <Grid item xs={12} sm={4}>
           <FormControl fullWidth>
-            <InputLabel>Company</InputLabel>
+            <InputLabel>material Dates</InputLabel>
             <Select
               value={selectedCompany}
               onChange={(e) => setSelectedCompany(e.target.value)}
               label="Company"
             >
-              <MenuItem value="">All Companies</MenuItem>
-              {companies.map((company) => (
-                <MenuItem key={company} value={company}>
-                  {company}
+              <MenuItem value="">material Dates</MenuItem>
+              {materialDates.map((date) => (
+                <MenuItem key={date} value={date}>
+                  {format(new Date(date), "dd-MM-yyyy")}
                 </MenuItem>
               ))}
             </Select>
@@ -719,16 +661,16 @@ const TaxInvoiceTable = () => {
         </Grid>
         <Grid item xs={12} sm={4}>
           <FormControl fullWidth>
-            <InputLabel>Date</InputLabel>
+            <InputLabel>material Details</InputLabel>
             <Select
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               label="Date"
             >
-              <MenuItem value="">All Dates</MenuItem>
-              {dates.map((date) => (
-                <MenuItem key={date} value={date}>
-                  {format(new Date(date), "dd-MM-yyyy")}
+              <MenuItem value="">material Details</MenuItem>
+              {materialDetailsData.map((data) => (
+                <MenuItem key={data} value={data}>
+                  {data}
                 </MenuItem>
               ))}
             </Select>
@@ -800,34 +742,20 @@ const TaxInvoiceTable = () => {
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((invoice) => (
                   <TableRow key={invoice._id}>
-                    <TableCell>{invoice.companyName}</TableCell>
                     <TableCell>
-                      {format(new Date(invoice.date), "dd-MM-yyyy")}
+                      {invoice.date
+                        ? format(new Date(invoice.date), "dd-MM-yyyy")
+                        : null}
                     </TableCell>
-                    <TableCell>{invoice.description}</TableCell>
-                    <TableCell>{invoice.unit}</TableCell>
-                    <TableCell>{invoice.qty}</TableCell>
-                    <TableCell>{invoice.rate}</TableCell>
-                    <TableCell>{invoice.total}</TableCell>
+                    <TableCell>
+                      {invoice.materialDetails ? invoice.materialDetails : ""}
+                    </TableCell>
+                    <TableCell>{invoice.qty ? invoice.qty : ""}</TableCell>
+                    <TableCell>{invoice.amt ? invoice.amt : ""}</TableCell>
                     <TableCell
                       sx={{ textAlign: "center" }}
                       style={{ display: "flex" }}
                     >
-                      {/* <IconButton
-                      onClick={() => {
-                        setInvoiceData(invoice);
-                        handleGmailOpen();
-                      }}
-                      color="primary"
-                    >
-                      <EmailIcon />
-                    </IconButton> */}
-                      {/* <IconButton
-                      color="primary"
-                      onClick={() => handleViewDialogOpen(invoice)}
-                    >
-                      <VisibilityIcon />
-                    </IconButton> */}
                       <IconButton
                         onClick={() => exportToPDF(invoice)}
                         color="primary"
@@ -886,7 +814,7 @@ const TaxInvoiceTable = () => {
         }}
       >
         <DialogTitle>
-          {mode === "add" ? "Add Quotation" : "Edit Quotation"}
+          {mode === "add" ? "Add Material Out" : "Edit Material Out"}
         </DialogTitle>
         <DialogContent
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
@@ -906,16 +834,6 @@ const TaxInvoiceTable = () => {
                 pb: 1,
               }}
             >
-              <Grid item xs={12} sm={2}>
-                <TextField
-                  label="Company"
-                  name="companyName"
-                  value={row.companyName}
-                  onChange={(e) => handleInputChange(e, index)}
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
               <Grid item xs={6} sm={2}>
                 <TextField
                   label="Date"
@@ -928,27 +846,17 @@ const TaxInvoiceTable = () => {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={4}>
                 <TextField
-                  label="Description"
-                  name="description"
-                  value={row.description}
+                  label="Material Details"
+                  name="materialDetails"
+                  value={row.materialDetails}
                   onChange={(e) => handleInputChange(e, index)}
                   size="small"
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={4} sm={1}>
-                <TextField
-                  label="Unit"
-                  name="unit"
-                  value={row.unit}
-                  onChange={(e) => handleInputChange(e, index)}
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={4} sm={1}>
+              <Grid item xs={4} sm={2}>
                 <TextField
                   label="Qty"
                   name="qty"
@@ -959,23 +867,13 @@ const TaxInvoiceTable = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={4} sm={1}>
-                <TextField
-                  label="Rate"
-                  name="rate"
-                  type="number"
-                  value={row.rate}
-                  onChange={(e) => handleInputChange(e, index)}
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
               <Grid item xs={6} sm={2}>
                 <TextField
-                  label="Total"
-                  name="total"
-                  value={row.qty * row.rate || 0}
-                  disabled
+                  label="Amount"
+                  name="amt"
+                  type="number"
+                  value={row.amt}
+                  onChange={(e) => handleInputChange(e, index)}
                   size="small"
                   fullWidth
                 />
@@ -1000,6 +898,7 @@ const TaxInvoiceTable = () => {
             </Grid>
           ))}
         </DialogContent>
+
         <DialogActions>
           <Button onClick={handleDialogClose}>Cancel</Button>
           <Button
@@ -1007,7 +906,7 @@ const TaxInvoiceTable = () => {
             variant="contained"
             color="primary"
           >
-            {mode === "add" ? "Add to Table" : "Update Quotation"}
+            {mode === "add" ? "Add to Table" : "Update Material Out"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1020,7 +919,7 @@ const TaxInvoiceTable = () => {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          {"Delete this Quotation?"}
+          {"Delete this Material Out?"}
         </DialogTitle>
         <DialogActions>
           <Button onClick={handleDeleteDialogClose}>Cancel</Button>
@@ -1052,7 +951,7 @@ const TaxInvoiceTable = () => {
 
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onClose={handleViewDialogClose}>
-        <DialogTitle>View Quotation</DialogTitle>
+        <DialogTitle>View Material Out</DialogTitle>
         <DialogContent>
           {selectedInvoice && (
             <>
