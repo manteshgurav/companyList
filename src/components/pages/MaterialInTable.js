@@ -40,8 +40,8 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import "jspdf-autotable";
 
-// const API_URL = "https://km-enterprices.onrender.com/quotations";
-const API_URL = "http://localhost:5000/materialin";
+const API_URL = "https://km-enterprices.onrender.com/materialin";
+// const API_URL = "http://localhost:5000/materialin";
 
 const TaxInvoiceTable = () => {
   const [tableData, setTableData] = useState([]);
