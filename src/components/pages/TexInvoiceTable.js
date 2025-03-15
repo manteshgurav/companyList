@@ -415,10 +415,10 @@ const TaxInvoiceTable = () => {
     setDialogGmailpen(false);
   };
 
-  const handleViewDialogOpen = (invoice) => {
-    setSelectedInvoice(invoice);
-    setViewDialogOpen(true);
-  };
+  // const handleViewDialogOpen = (invoice) => {
+  //   setSelectedInvoice(invoice);
+  //   setViewDialogOpen(true);
+  // };
 
   const handleViewDialogClose = () => {
     setViewDialogOpen(false);
@@ -451,8 +451,11 @@ const TaxInvoiceTable = () => {
         method: "DELETE",
       });
       if (response.ok) {
-        setTableData(
-          tableData.filter((item) => item._id !== selectedInvoice._id)
+        setTableData((prevData) =>
+          prevData.filter((item) => item._id !== selectedInvoice._id)
+        );
+        setFilteredData((prevData) =>
+          prevData.filter((item) => item._id !== selectedInvoice._id)
         );
         showSnackbar("Invoice deleted successfully!", "success");
       } else {
@@ -1167,10 +1170,10 @@ const TaxInvoiceTable = () => {
               <DialogContentText>
                 <strong>Company Name:</strong> {selectedInvoice.companyName}
               </DialogContentText>
-              <DialogContentText>
+              {/* <DialogContentText>
                 <strong>Date:</strong>{" "}
                 {format(new Date(selectedInvoice.date), "dd-MM-yyyy")}
-              </DialogContentText>
+              </DialogContentText> */}
               <DialogContentText>
                 <strong>Description:</strong> {selectedInvoice.description}
               </DialogContentText>
