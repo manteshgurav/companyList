@@ -513,45 +513,73 @@ const TaxInvoiceTable = () => {
     const doc = new jsPDF();
 
     // Set up the header with a custom title (KM Enterprises)
-    doc.setFontSize(18);
+    doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("KM Enterprises", 10, 10);
+    doc.text("K.M. ENTERPRISES", 105, 15, { align: "center" });
 
-    // Add a line under the header
-    doc.setLineWidth(0.5);
-    doc.line(10, 12, 200, 12);
-
-    // Set up the body content with invoice details
-    doc.setFontSize(12);
+    // Add a subheader with additional details
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text(`Company: ${invoice.companyName}`, 10, 30);
-    doc.text(`Date: ${format(new Date(invoice.date), "dd-MM-yyyy")}`, 10, 40);
-    doc.text(`Description: ${invoice.description}`, 10, 50);
-    doc.text(`Unit: ${invoice.unit}`, 10, 60);
-    doc.text(`Unit: ${invoice.unit}`, 10, 60);
-    doc.text(`Qty: ${invoice.qty}`, 10, 70);
+    const subheaderText = [
+      "(CIVIL & SAND, COPPER SLAG, GRIT BLASTING, SCAFFOLDING, EPOXY PAINTING, ROOF SHEET, INDUSTRIAL MAINTENANCE WORK)",
+      "D.No. V4 3-28/1, Sathya Prakash Building, Kulur, Mangalore, D.K. - 575 013 , Email: kmenterprises0897@gmail.com",
+    ];
+    subheaderText.forEach((line, index) => {
+      doc.text(line, 105, 25 + index * 5, { align: "center" });
+    });
 
-    // Add a footer
-    const pageCount = doc.internal.getNumberOfPages();
-    doc.setFontSize(10);
+    // Add a separator line
+    doc.setLineWidth(0.5);
+    doc.line(10, 35, 200, 35);
 
-    doc.setFontSize(18);
+    // Add "MATERIAL OUT DETAILS" heading
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("KM Enterprises", 10, 10);
-    doc.text(
-      "===========================================================",
-      10,
-      10
-    );
+    doc.text("MATERIAL IN DETAILS", 105, 60, { align: "center" });
 
-    doc.text(
-      `Page ${pageCount}`,
-      doc.internal.pageSize.width - 20,
-      doc.internal.pageSize.height - 10
-    );
+    // Define table columns
+    const tableColumn = ["Date", "Material Details", "Qty", "Amount"];
+
+    // Prepare table rows
+    const tableRows = [
+      [
+        format(new Date(invoice.date), "dd-MM-yyyy"),
+        invoice.materialDetails,
+        invoice.qty,
+        invoice.amt,
+      ],
+    ];
+
+    // Generate table with borders
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 70, // Adjusted startY to prevent overlapping
+      theme: "grid", // Adds border to cells
+      styles: { fontSize: 10, cellPadding: 2 },
+      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] }, // Black header with white text
+      alternateRowStyles: { fillColor: [240, 240, 240] }, // Light gray alternate row
+      tableLineColor: [0, 0, 0], // Black border color
+      tableLineWidth: 0.1, // Border width
+    });
+
+    // Add footer with bank details
+    const finalY = doc.autoTable.previous.finalY + 10;
+    doc.setFontSize(10);
+    doc.text("Bank Details:", 10, finalY);
+    doc.text("M/S K.M ENTERPRISES", 10, finalY + 10);
+    doc.text("BANK NAME: UNION BANK OF INDIA", 10, finalY + 20);
+    doc.text("ACCOUNT NO: 017621010000026", 10, finalY + 30);
+    doc.text("IFSC CODE: UBIN0901768", 10, finalY + 40);
+    doc.text("GSTIN NO: 29DRZPM1536G12Z5", 10, finalY + 50);
+    doc.text("PAN NO: DRZPM1536G", 10, finalY + 60);
+
+    // Add "Yours faithfully" and signature
+    doc.text("Yours faithfully,", 10, finalY + 80);
+    doc.text("For K.M ENTERPRISES", 10, finalY + 90);
 
     // Save the PDF with the file name
-    doc.save(`${invoice.companyName}_Invoice.pdf`);
+    doc.save(`MaterialIn_${format(new Date(), "dd-MM-yyyy")}.pdf`);
   };
 
   const exportToExcel = (invoice) => {
